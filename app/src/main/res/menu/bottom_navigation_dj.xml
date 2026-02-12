@@ -1,22 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/homeClubber"
+        android:id="@+id/homeDJ"
         android:enabled="true"
         android:icon="@drawable/ic_home"
         android:title="Home"/>
     <item
-        android:id="@+id/searchClubber"
+        android:id="@+id/playlistsDJ"
         android:enabled="true"
-        android:icon="@drawable/ic_search"
-        android:title="Search"/>
+        android:icon="@drawable/ic_spotify"
+        android:title="Playlists"/>
     <item
-        android:id="@+id/favoritesClubber"
-        android:enabled="true"
-        android:icon="@drawable/ic_favorite"
-        android:title="Favorites"/>
-    <item
-        android:id="@+id/profileClubber"
+        android:id="@+id/profileDJ"
         android:enabled="true"
         android:icon="@drawable/ic_default_avatar"
         android:title="Profile"/>

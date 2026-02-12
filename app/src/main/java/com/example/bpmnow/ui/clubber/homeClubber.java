@@ -2,17 +2,31 @@ package com.example.bpmnow.ui.clubber;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
+import com.example.bpmnow.MainActivity;
 import com.example.bpmnow.R;
+import com.example.bpmnow.adapters.ClubAdapter;
+import com.example.bpmnow.adapters.DjAdapter;
+import com.example.bpmnow.models.Club;
+import com.example.bpmnow.models.Dj;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -29,6 +43,12 @@ public class homeClubber extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private RecyclerView clubberRecyclerView;
+    private RecyclerView DJRecyclerView;
+    private ClubAdapter clubsAdapter;
+    private DjAdapter DJsAdapter;
+    private List<Club> clubItems = new ArrayList<>();
+    private List<Dj> DJItems = new ArrayList<>();
 
     public homeClubber() {
         // Required empty public constructor
@@ -67,14 +87,120 @@ public class homeClubber extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_home_clubber, container, false);
 
-//        Need this because the new approach of android's EdegeToEdge() in the main activity, add also after that
-//        some insets and paddings that make the navbar bigger, we dont want it on this navigation so we need to use this
-//        on each fragment in the navigation
-        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
-            // return CONSUMED so the insets don't propagate to the root view
-            return WindowInsetsCompat.CONSUMED;
-        });
+        ((MainActivity) requireActivity()).setClubberBottomNavigationVisible();
+        setupClubsRecyclerView(view);
+        setupDJsRecyclerView(view);
+        loadDataClubber();
+        loadDataDJs();
 
         return view;
     }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+    }
+
+    private void setupClubsRecyclerView(View view) {
+        clubberRecyclerView = view.findViewById(R.id.clubsRecyclerView);
+        clubberRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL,
+                false));
+        clubsAdapter = new ClubAdapter(clubItems);
+        clubberRecyclerView.setAdapter(clubsAdapter);
+    }
+
+    private void setupDJsRecyclerView(View view) {
+        DJRecyclerView = view.findViewById(R.id.DJsRecyclerView);
+//        If we want grid layout we do it like this (and need to switch the width of the item in the recycler view
+//        to wrap_content, so other items can be side by side)
+//        contactsRecView.setLayoutManager(new GridLayoutManager(this,2));
+        DJRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL,
+                false));
+        DJsAdapter = new DjAdapter(DJItems);
+        DJRecyclerView.setAdapter(DJsAdapter);
+    }
+
+    private void loadDataClubber() {
+        clubItems.add(new Club(
+                "Velvet Underground",
+                new ArrayList<>(Arrays.asList("Techno", "House", "Minimal")),
+                "0.5 km",
+                "DJ Shadow"
+        ));
+
+        clubItems.add(new Club(
+                "Neon Nights",
+                new ArrayList<>(Arrays.asList("EDM", "Trance", "Progressive")),
+                "1.2 km",
+                "Armin Van Buuren"
+        ));
+
+        clubItems.add(new Club(
+                "The Bassment",
+                new ArrayList<>(Arrays.asList("Drum & Bass", "Dubstep", "Jungle")),
+                "2.0 km",
+                "DJ Fresh"
+        ));
+
+        clubItems.add(new Club(
+                "Studio 54",
+                new ArrayList<>(Arrays.asList("Disco", "Funk", "Soul")),
+                "0.8 km",
+                "Nile Rodgers"
+        ));
+
+        clubItems.add(new Club(
+                "Warehouse Project",
+                new ArrayList<>(Arrays.asList("Techno", "Industrial", "Acid")),
+                "3.5 km",
+                "Charlotte de Witte"
+        ));
+
+        clubItems.add(new Club(
+                "Paradise Garage",
+                new ArrayList<>(Arrays.asList("Deep House", "Garage", "Soulful")),
+                "1.8 km",
+                "Kerri Chandler"
+        ));
+
+        clubItems.add(new Club(
+                "Berghain TLV",
+                new ArrayList<>(Arrays.asList("Techno", "Hard Techno", "EBM")),
+                "4.2 km",
+                "Ben Klock"
+        ));
+
+        clubItems.add(new Club(
+                "Rhythm Factory",
+                new ArrayList<>(Arrays.asList("Hip Hop", "R&B", "Afrobeats")),
+                "0.3 km",
+                "DJ Khaled"
+        ));
+
+        clubsAdapter.updateData(clubItems);
+    }
+
+    private void loadDataDJs() {
+        DJItems.add(new Dj(
+                "Red Axeses",
+                new ArrayList<>(Arrays.asList("Techno", "House", "Minimal"))));
+        DJItems.add(new Dj(
+                "DJ Elon Matana",
+                new ArrayList<>(Arrays.asList("Techno", "House", "Minimal"))));
+        DJItems.add(new Dj(
+                "DJ Khaled",
+                new ArrayList<>(Arrays.asList("Techno", "House", "Minimal"))));
+        DJItems.add(new Dj(
+                "DJ Malka",
+                new ArrayList<>(Arrays.asList("Techno", "House", "Minimal"))));
+        DJItems.add(new Dj(
+                "DJ Shadow",
+                new ArrayList<>(Arrays.asList("Techno", "House", "Minimal"))));
+        DJItems.add(new Dj(
+                "DJ BL3SS",
+                new ArrayList<>(Arrays.asList("Techno", "House", "Minimal"))));
+
+        DJsAdapter.updateData(DJItems);
+    }
+
 }

@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.bpmnow.MainActivity;
 import com.example.bpmnow.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -115,6 +116,7 @@ public class signIn extends Fragment {
                                     // Sign in success, update UI with the signed-in user's information
                                     FirebaseUser user = mAuth.getCurrentUser();
                                     NavHostFragment.findNavController(signIn.this).navigate(R.id.action_signIn_to_roleSelection);
+                                    ((MainActivity) requireActivity()).startSpotifyLogin();
 
                                 } else {
                                     // If sign in fails, display a message to the user.

@@ -9,5 +9,14 @@
         android:id="@+id/formDJ"
         android:name="com.example.bpmnow.ui.dj.formDJ"
         android:label="fragment_form_d_j"
-        tools:layout="@layout/fragment_form_d_j" />
+        tools:layout="@layout/fragment_form_d_j" >
+        <action
+            android:id="@+id/action_formDJ_to_homeDJ"
+            app:destination="@id/homeDJ" />
+    </fragment>
+    <fragment
+        android:id="@+id/homeDJ"
+        android:name="com.example.bpmnow.ui.dj.homeDJ"
+        android:label="fragment_home_d_j"
+        tools:layout="@layout/fragment_home_d_j" />
 </navigation>

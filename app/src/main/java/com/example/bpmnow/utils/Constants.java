@@ -1,5 +1,8 @@
 package com.example.bpmnow.utils;
 
+import java.util.Arrays;
+import java.util.List;
+
 public final class Constants {
     private Constants() {}
 
@@ -43,10 +46,10 @@ public final class Constants {
     public static final String PREF_IS_LOGGED_IN = "is_logged_in";
 
     // Genres
-    public static final String[] GENRES = {
+    public static final List<String> GENRES = Arrays.asList(
             "House", "Techno", "EDM", "Hip-Hop", "R&B", "Pop",
             "Drum & Bass", "Trance", "Afrobeats", "Latin",
             "Reggaeton", "Deep House", "Progressive", "Minimal",
             "Dubstep", "Trap", "Funk", "Disco"
-    };
+    );
 }

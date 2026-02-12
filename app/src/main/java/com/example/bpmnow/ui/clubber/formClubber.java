@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.example.bpmnow.R;
+import com.example.bpmnow.utils.Constants;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -50,11 +51,7 @@ public class formClubber extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    private List<String> allGenres = Arrays.asList(
-            "Rock", "Jazz", "Pop", "Hip-Hop", "Classical",
-            "Electronic", "R&B", "Metal", "Country", "Reggae",
-            "Blues", "Soul", "Funk", "Punk", "Indie"
-    );
+    private List<String> allGenres = Constants.GENRES;
 
     private Set<String> selectedGenres = new HashSet<>();
     private Uri selectedImageUri;
@@ -117,7 +114,8 @@ public class formClubber extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_form_clubber, container, false);
+        View view = inflater.inflate(R.layout.fragment_form_clubber, container, false);
+        return view;
     }
 
     @Override
@@ -160,7 +158,7 @@ public class formClubber extends Fragment {
             }
         });
 
-        MaterialButton btnFormContinue = view.findViewById(R.id.btnFormContinue);
+        MaterialButton btnFormContinue = view.findViewById(R.id.btnFormContinueClubber);
         btnFormContinue.setOnClickListener(v -> {
             // Handle continue button click
             Navigation.findNavController(v).navigate(R.id.action_formClubber_to_homeClubber);
