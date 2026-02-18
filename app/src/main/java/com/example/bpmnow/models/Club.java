@@ -8,6 +8,7 @@ public class Club {
     private String distance;
     private String currentDJ;
     private int imageResId;
+    private List<ClubDjEntry> djs;
 
     // No-arg constructor required for Firestore
     public Club() {}
@@ -41,4 +42,7 @@ public class Club {
 
     public int getImageResId() { return imageResId; }
     public void setImageResId(int imageResId) { this.imageResId = imageResId; }
+
+    public List<ClubDjEntry> getDjs() { return djs; }
+    public void setDjs(List<ClubDjEntry> djs) { this.djs = djs; }
 }

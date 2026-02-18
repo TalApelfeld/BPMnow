@@ -28,6 +28,12 @@
         tools:layout="@layout/fragment_requests_d_j" />
 
     <fragment
+        android:id="@+id/clubsDJ"
+        android:name="com.example.bpmnow.ui.dj.clubsDJ"
+        android:label="Clubs"
+        tools:layout="@layout/fragment_clubs_d_j" />
+
+    <fragment
         android:id="@+id/profileDJ"
         android:name="com.example.bpmnow.ui.dj.profileDJ"
         android:label="Profile"

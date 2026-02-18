@@ -17,6 +17,7 @@ public final class Constants {
     public static final String COLLECTION_TRACKS = "tracks";
     public static final String COLLECTION_TRACK_FEEDBACK = "trackFeedback";
     public static final String COLLECTION_DJ_LIKES = "djLikes";
+    public static final String COLLECTION_CLUBS = "clubs";
 
     // Roles
     public static final String ROLE_CLUBBER = "clubber";

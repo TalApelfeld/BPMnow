@@ -11,6 +11,11 @@
         android:icon="@drawable/ic_music_note"
         android:title="Requests"/>
     <item
+        android:id="@+id/clubsDJ"
+        android:enabled="true"
+        android:icon="@drawable/ic_clubs"
+        android:title="Clubs"/>
+    <item
         android:id="@+id/profileDJ"
         android:enabled="true"
         android:icon="@drawable/ic_default_avatar"

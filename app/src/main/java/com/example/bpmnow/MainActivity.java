@@ -20,6 +20,7 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.bpmnow.network.FirebaseAuthConnection;
 import com.example.bpmnow.network.FirebaseDBConnection;
+import com.example.bpmnow.utils.ClubsSeeder;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -54,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
         // Set initial graph
 //        navController.setGraph(R.navigation.nav_graph);
 
+        // Seed clubs collection if needed
+        ClubsSeeder.seedIfNeeded();
     }
 
     @Override
@@ -102,6 +105,11 @@ public class MainActivity extends AppCompatActivity {
     public void switchToFormDJ() {
         navController.setGraph(R.navigation.nav_graph_dj);
         navController.navigate(R.id.formDJ);
+    }
+
+    public void switchToFormClubber() {
+        navController.setGraph(R.navigation.nav_graph_clubber);
+        navController.navigate(R.id.formClubber);
     }
 
 

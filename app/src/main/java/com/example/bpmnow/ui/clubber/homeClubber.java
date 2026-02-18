@@ -78,7 +78,7 @@ public class homeClubber extends Fragment {
         DJsAdapter = new DjAdapter(DJItems, dj -> {
             // Navigate to DJ profile
             Bundle bundle = new Bundle();
-            bundle.putString("uid", dj.getDjId());
+            bundle.putString("djId", dj.getDjId());
             Navigation.findNavController(view).navigate(R.id.action_home_to_djProfile, bundle);
         });
         DJRecyclerView.setAdapter(DJsAdapter);
@@ -122,7 +122,13 @@ public class homeClubber extends Fragment {
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     DJItems.clear();
-                    DJItems.addAll(querySnapshot.toObjects(Dj.class));
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        Dj dj = doc.toObject(Dj.class);
+                        if (dj != null) {
+                            dj.setDjId(doc.getId());
+                            DJItems.add(dj);
+                        }
+                    }
                     DJsAdapter.updateData(DJItems);
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Error loading DJs", e));

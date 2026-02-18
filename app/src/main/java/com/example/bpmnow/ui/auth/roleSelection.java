@@ -119,7 +119,7 @@ public class roleSelection extends Fragment {
 //                and just change the navigation graphs, and we do this from the main activity, but we cant access
 //                the elements of the fragment from the activity so we can do this)
 
-            ((MainActivity) requireActivity()).switchToGraphClubber();
+            ((MainActivity) requireActivity()).switchToFormClubber();
         } else if (selectedRole.equals(Constants.ROLE_DJ)) {
 //                Getting the method from MainActivity (this is the approach because the standard is to have one activity
 //                and just change the navigation graphs, and we do this from the main activity, but we cant access

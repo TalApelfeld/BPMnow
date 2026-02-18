@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bpmnow.R;
-import com.example.bpmnow.adapters.ClubDjAdapter;
+import com.example.bpmnow.adapters.DjAdapter;
 import com.example.bpmnow.adapters.ClubAdapter;
 import com.example.bpmnow.models.Club;
 import com.example.bpmnow.models.Dj;
@@ -45,7 +45,7 @@ public class searchClubber extends Fragment {
 
     // Adapters for different modes
     private ClubAdapter clubAdapter;
-    private ClubDjAdapter djAdapter;
+    private DjAdapter djAdapter;
     private List<Club> clubResults = new ArrayList<>();
     private List<Dj> djResults = new ArrayList<>();
 
@@ -130,7 +130,7 @@ public class searchClubber extends Fragment {
     }
 
     private void setupDjAdapter() {
-        djAdapter = new ClubDjAdapter(djResults, dj -> {
+        djAdapter = new DjAdapter(djResults, dj -> {
             Bundle bundle = new Bundle();
             bundle.putString("djId", dj.getDjId());
             Navigation.findNavController(requireView()).navigate(R.id.action_search_to_djProfile, bundle);
@@ -154,7 +154,13 @@ public class searchClubber extends Fragment {
                 .get()
                 .addOnSuccessListener(qs -> {
                     djResults.clear();
-                    djResults.addAll(qs.toObjects(Dj.class));
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : qs.getDocuments()) {
+                        Dj dj = doc.toObject(Dj.class);
+                        if (dj != null) {
+                            dj.setDjId(doc.getId());
+                            djResults.add(dj);
+                        }
+                    }
                     djAdapter.updateData(djResults);
                     tvNoResults.setVisibility(djResults.isEmpty() ? View.VISIBLE : View.GONE);
                 });
@@ -183,7 +189,13 @@ public class searchClubber extends Fragment {
                 .get()
                 .addOnSuccessListener(qs -> {
                     djResults.clear();
-                    djResults.addAll(qs.toObjects(Dj.class));
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : qs.getDocuments()) {
+                        Dj dj = doc.toObject(Dj.class);
+                        if (dj != null) {
+                            dj.setDjId(doc.getId());
+                            djResults.add(dj);
+                        }
+                    }
                     djAdapter.updateData(djResults);
                     tvNoResults.setVisibility(djResults.isEmpty() ? View.VISIBLE : View.GONE);
                 });
