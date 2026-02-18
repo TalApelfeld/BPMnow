@@ -3,25 +3,33 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph_dj"
-    app:startDestination="@id/formDJ">
+    app:startDestination="@id/dashboardDJ">
 
     <fragment
         android:id="@+id/formDJ"
         android:name="com.example.bpmnow.ui.dj.formDJ"
         android:label="fragment_form_d_j"
-        tools:layout="@layout/fragment_form_d_j" >
+        tools:layout="@layout/fragment_form_d_j">
         <action
-            android:id="@+id/action_formDJ_to_homeDJ"
-            app:destination="@id/homeDJ" />
+            android:id="@+id/action_formDJ_to_dashboardDJ"
+            app:destination="@id/dashboardDJ" />
     </fragment>
+
     <fragment
-        android:id="@+id/homeDJ"
-        android:name="com.example.bpmnow.ui.dj.homeDJ"
-        android:label="fragment_home_d_j"
-        tools:layout="@layout/fragment_home_d_j" />
+        android:id="@+id/dashboardDJ"
+        android:name="com.example.bpmnow.ui.dj.dashboardDJ"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_dashboard_d_j" />
+
     <fragment
-        android:id="@+id/playlistsDJ"
-        android:name="com.example.bpmnow.ui.dj.platlistsDJ"
-        android:label="fragment_platlists_d_j"
-        tools:layout="@layout/fragment_platlists_d_j" />
+        android:id="@+id/requestsDJ"
+        android:name="com.example.bpmnow.ui.dj.requestsDJ"
+        android:label="Requests"
+        tools:layout="@layout/fragment_requests_d_j" />
+
+    <fragment
+        android:id="@+id/profileDJ"
+        android:name="com.example.bpmnow.ui.dj.profileDJ"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile_d_j" />
 </navigation>

@@ -11,14 +11,25 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.bpmnow.R;
 import com.example.bpmnow.models.Club;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ClubAdapter extends RecyclerView.Adapter<ClubAdapter.ClubViewHolder> {
+
+    public interface OnClubClickListener {
+        void onClubClick(Club club);
+    }
+
     private List<Club> clubs;
+    private OnClubClickListener listener;
 
     public ClubAdapter(List<Club> clubs) {
         this.clubs = clubs;
+        this.listener = null;
+    }
+
+    public ClubAdapter(List<Club> clubs, OnClubClickListener listener) {
+        this.clubs = clubs;
+        this.listener = listener;
     }
 
     @NonNull
@@ -39,12 +50,12 @@ public class ClubAdapter extends RecyclerView.Adapter<ClubAdapter.ClubViewHolder
         return clubs.size();
     }
 
-    // Method to update data
     public void updateData(List<Club> newItems) {
         this.clubs = newItems;
+        notifyDataSetChanged();
     }
 
-    public static class ClubViewHolder extends RecyclerView.ViewHolder {
+    public class ClubViewHolder extends RecyclerView.ViewHolder {
         private TextView name, genre, distance, currentDJ;
 
         public ClubViewHolder(@NonNull View itemView) {
@@ -55,15 +66,15 @@ public class ClubAdapter extends RecyclerView.Adapter<ClubAdapter.ClubViewHolder
             currentDJ = itemView.findViewById(R.id.currentDJTextView);
         }
 
-        //        Used in the "onBindViewHolder()"
         public void bind(Club club) {
             name.setText(club.getName());
-            genre.setText(club.getGenres().toString());
+            genre.setText(String.join(", ", club.getGenres()));
             distance.setText(club.getDistance());
             currentDJ.setText(club.getCurrentDJ());
 
+            itemView.setOnClickListener(v -> {
+                if (listener != null) listener.onClubClick(club);
+            });
         }
-
     }
-
 }

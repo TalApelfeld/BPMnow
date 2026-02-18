@@ -3,35 +3,100 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph_clubber"
-    app:startDestination="@id/formClubber">
+    app:startDestination="@id/homeClubber">
 
     <fragment
         android:id="@+id/formClubber"
         android:name="com.example.bpmnow.ui.clubber.formClubber"
         android:label="fragment_form_clubber"
-        tools:layout="@layout/fragment_form_clubber" >
+        tools:layout="@layout/fragment_form_clubber">
         <action
             android:id="@+id/action_formClubber_to_homeClubber"
             app:destination="@id/homeClubber" />
     </fragment>
+
     <fragment
         android:id="@+id/homeClubber"
         android:name="com.example.bpmnow.ui.clubber.homeClubber"
         android:label="homeClubber"
-        tools:layout="@layout/fragment_home_clubber"/>
+        tools:layout="@layout/fragment_home_clubber">
+        <action
+            android:id="@+id/action_home_to_clubDetail"
+            app:destination="@id/clubDetailClubber" />
+        <action
+            android:id="@+id/action_home_to_djProfile"
+            app:destination="@id/djProfileClubber" />
+    </fragment>
+
     <fragment
         android:id="@+id/searchClubber"
         android:name="com.example.bpmnow.ui.clubber.searchClubber"
         android:label="fragment_search_clubber"
-        tools:layout="@layout/fragment_search_clubber" />
+        tools:layout="@layout/fragment_search_clubber">
+        <action
+            android:id="@+id/action_search_to_clubDetail"
+            app:destination="@id/clubDetailClubber" />
+        <action
+            android:id="@+id/action_search_to_djProfile"
+            app:destination="@id/djProfileClubber" />
+    </fragment>
+
     <fragment
         android:id="@+id/favoritesClubber"
         android:name="com.example.bpmnow.ui.clubber.favoritesClubber"
         android:label="fragment_favorites_clubber"
-        tools:layout="@layout/fragment_favorites_clubber" />
+        tools:layout="@layout/fragment_favorites_clubber">
+        <action
+            android:id="@+id/action_favorites_to_djProfile"
+            app:destination="@id/djProfileClubber" />
+    </fragment>
+
     <fragment
         android:id="@+id/profileClubber"
         android:name="com.example.bpmnow.ui.clubber.profileClubber"
         android:label="fragment_profile_clubber"
         tools:layout="@layout/fragment_profile_clubber" />
+
+    <!-- New fragments -->
+    <fragment
+        android:id="@+id/clubDetailClubber"
+        android:name="com.example.bpmnow.ui.clubber.clubDetailClubber"
+        android:label="Club Detail"
+        tools:layout="@layout/fragment_club_detail_clubber">
+        <argument
+            android:name="clubName"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_clubDetail_to_djProfile"
+            app:destination="@id/djProfileClubber" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/djProfileClubber"
+        android:name="com.example.bpmnow.ui.clubber.djProfileClubber"
+        android:label="DJ Profile"
+        tools:layout="@layout/fragment_dj_profile_clubber">
+        <argument
+            android:name="djId"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_djProfile_to_playlistDetail"
+            app:destination="@id/playlistDetailClubber" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/playlistDetailClubber"
+        android:name="com.example.bpmnow.ui.clubber.playlistDetailClubber"
+        android:label="Playlist"
+        tools:layout="@layout/fragment_playlist_detail_clubber">
+        <argument
+            android:name="djId"
+            app:argType="string" />
+        <argument
+            android:name="playlistId"
+            app:argType="string" />
+        <argument
+            android:name="playlistName"
+            app:argType="string" />
+    </fragment>
 </navigation>

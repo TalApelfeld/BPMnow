@@ -16,60 +16,56 @@ import androidx.navigation.Navigation;
 
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.example.bpmnow.R;
+import com.example.bpmnow.network.FirebaseAuthConnection;
+import com.example.bpmnow.network.FirebaseDBConnection;
 import com.example.bpmnow.utils.Constants;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link formClubber#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class formClubber extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
+    private static final String TAG = "formClubber";
     private List<String> allGenres = Constants.GENRES;
-
     private Set<String> selectedGenres = new HashSet<>();
     private Uri selectedImageUri;
     private ShapeableImageView profileImageView;
+    private TextInputEditText nicknameInput;
+    private TextInputEditText ageInput;
+
     private final ActivityResultLauncher<String> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null) {
                     selectedImageUri = uri;
-                    profileImageView.setImageURI(uri); // works because it's a field
+                    profileImageView.setImageURI(uri);
                 }
             });
-    // correct - permission launcher should be <String> for input but the callback receives Boolean
+
     private final ActivityResultLauncher<String> permissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted != null && isGranted) {
                     pickImageLauncher.launch("image/*");
                 } else {
-                    // on Android 14, partial access still allows picking
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                         pickImageLauncher.launch("image/*");
                     } else {
@@ -83,20 +79,11 @@ public class formClubber extends Fragment {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment formClubber.
-     */
-    // TODO: Rename and change types and number of parameters
     public static formClubber newInstance(String param1, String param2) {
         formClubber fragment = new formClubber();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putString("param1", param1);
+        args.putString("param2", param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -104,33 +91,29 @@ public class formClubber extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_form_clubber, container, false);
-        return view;
+        return inflater.inflate(R.layout.fragment_form_clubber, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // get views manually since you're not using ViewBinding
-        ChipGroup genreChipGroup = view.findViewById(R.id.genreChipGroup);
+
+        nicknameInput = view.findViewById(R.id.nicknameInput);
         TextInputEditText genreSearchInput = view.findViewById(R.id.genreSearchInput);
-
-        setupGenreChips(genreChipGroup, allGenres);
-        setupSearch(genreSearchInput, genreChipGroup);
-
+        ChipGroup genreChipGroup = view.findViewById(R.id.genreChipGroup);
+        ageInput = view.findViewById(R.id.ageInput);
         profileImageView = view.findViewById(R.id.profileImageView);
+        MaterialButton btnFormContinue = view.findViewById(R.id.btnFormContinueClubber);
 
-        // in onViewCreated replace the click listener with this
+        setupSearch(genreSearchInput, genreChipGroup);
+        setupGenreChips(genreChipGroup, allGenres);
+
+
         profileImageView.setOnClickListener(v -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 if (ContextCompat.checkSelfPermission(requireContext(),
@@ -158,23 +141,77 @@ public class formClubber extends Fragment {
             }
         });
 
-        MaterialButton btnFormContinue = view.findViewById(R.id.btnFormContinueClubber);
         btnFormContinue.setOnClickListener(v -> {
-            // Handle continue button click
-            Navigation.findNavController(v).navigate(R.id.action_formClubber_to_homeClubber);
+            if (validateForm()) {
+                saveToFirestoreAndNavigate(v);
+            }
         });
+    }
+
+    private boolean validateForm() {
+        String nickname = nicknameInput.getText() != null ? nicknameInput.getText().toString().trim() : "";
+        String ageStr = ageInput.getText() != null ? ageInput.getText().toString().trim() : "";
+
+        if (nickname.isEmpty()) {
+            Toast.makeText(requireContext(), "Please enter a nickname", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (ageStr.isEmpty()) {
+            Toast.makeText(requireContext(), "Please enter your age", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (selectedGenres.isEmpty()) {
+            Toast.makeText(requireContext(), "Please select at least one genre", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
+    private void saveToFirestoreAndNavigate(View v) {
+        String uid = FirebaseAuthConnection.getInstance().getUserId();
+        String nickname = nicknameInput.getText().toString().trim();
+        int age = Integer.parseInt(ageInput.getText().toString().trim());
+
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("uid", uid);
+        userData.put("nickname", nickname);
+        userData.put("age", age);
+        userData.put("genres", new ArrayList<>(selectedGenres));
+        userData.put("role", Constants.ROLE_CLUBBER);
+        userData.put("profileImageUrl", selectedImageUri != null ? selectedImageUri.toString() : "");
+        userData.put("createdAt", Timestamp.now());
+
+        FirebaseDBConnection.getInstance().getDB()
+                .collection(Constants.COLLECTION_USERS)
+                .document(uid)
+                .set(userData)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Clubber profile saved to Firestore");
+                    // Save role to SharedPreferences for quick access
+                    requireContext().getSharedPreferences(Constants.PREFS_NAME, 0)
+                            .edit()
+                            .putString(Constants.PREF_USER_ROLE, Constants.ROLE_CLUBBER)
+                            .putString(Constants.PREF_USER_UID, uid)
+                            .putString(Constants.PREF_USER_NAME, nickname)
+                            .putBoolean(Constants.PREF_IS_LOGGED_IN, true)
+                            .apply();
+                    Navigation.findNavController(v).navigate(R.id.action_formClubber_to_homeClubber);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error saving clubber profile", e);
+                    Toast.makeText(requireContext(), "Failed to save profile: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void setupGenreChips(ChipGroup chipGroup, List<String> genres) {
         chipGroup.removeAllViews();
-
         for (String genre : genres) {
             Chip chip = new Chip(requireContext(), null,
                     com.google.android.material.R.attr.chipStyle);
             chip.setText(genre);
             chip.setCheckable(true);
             chip.setChecked(selectedGenres.contains(genre));
-
             chip.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (isChecked) {
                     selectedGenres.add(genre);
@@ -182,7 +219,6 @@ public class formClubber extends Fragment {
                     selectedGenres.remove(genre);
                 }
             });
-
             chipGroup.addView(chip);
         }
     }

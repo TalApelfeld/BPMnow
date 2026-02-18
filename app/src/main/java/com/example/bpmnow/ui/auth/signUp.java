@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.bpmnow.R;
+import com.example.bpmnow.network.FirebaseAuthConnection;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
@@ -38,7 +39,7 @@ public class signUp extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    private FirebaseAuth mAuth;
+//    private FirebaseAuth mAuth;
 
     public signUp() {
         // Required empty public constructor
@@ -94,8 +95,6 @@ public class signUp extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize Firebase Auth
-        mAuth = FirebaseAuth.getInstance();
         MaterialButton signUpBtn = view.findViewById(R.id.signUpBtn);
 
 
@@ -108,12 +107,12 @@ public class signUp extends Fragment {
                 String email = emailField.getText().toString().trim();
                 String password = passwordField.getText().toString().trim();
 
-                mAuth.createUserWithEmailAndPassword(email, password)
+                FirebaseAuthConnection.getInstance().getAuth().createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(requireActivity(), new OnCompleteListener<AuthResult>() {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if (task.isSuccessful()) {
-                                    FirebaseUser user = mAuth.getCurrentUser();
+                                    FirebaseUser user = FirebaseAuthConnection.getInstance().getAuth().getCurrentUser();
                                     NavHostFragment.findNavController(signUp.this).navigate(R.id.action_signUp_to_roleSelection);
 
                                 } else {
@@ -126,14 +125,4 @@ public class signUp extends Fragment {
             }
         });
     }
-
-//    @Override
-//    public void onStart() {
-//        super.onStart();
-//        // Check if user is signed in (non-null) and update UI accordingly.
-//        FirebaseUser currentUser = mAuth.getCurrentUser();
-//        if (currentUser != null) {
-//            currentUser.reload();
-//        }
-//    }
 }

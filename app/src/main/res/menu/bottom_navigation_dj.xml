@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/homeDJ"
+        android:id="@+id/dashboardDJ"
         android:enabled="true"
         android:icon="@drawable/ic_home"
-        android:title="Home"/>
+        android:title="Dashboard"/>
     <item
-        android:id="@+id/playlistsDJ"
+        android:id="@+id/requestsDJ"
         android:enabled="true"
-        android:icon="@drawable/ic_spotify"
-        android:title="Playlists"/>
+        android:icon="@drawable/ic_music_note"
+        android:title="Requests"/>
     <item
         android:id="@+id/profileDJ"
         android:enabled="true"

@@ -9,16 +9,27 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bpmnow.R;
-import com.example.bpmnow.models.Club;
 import com.example.bpmnow.models.Dj;
 
 import java.util.List;
 
 public class DjAdapter extends RecyclerView.Adapter<DjAdapter.DjViewHolder> {
+
+    public interface OnDjClickListener {
+        void onDjClick(Dj dj);
+    }
+
     private List<Dj> DJs;
+    private OnDjClickListener listener;
 
     public DjAdapter(List<Dj> DJs) {
         this.DJs = DJs;
+        this.listener = null;
+    }
+
+    public DjAdapter(List<Dj> DJs, OnDjClickListener listener) {
+        this.DJs = DJs;
+        this.listener = listener;
     }
 
     @NonNull
@@ -41,9 +52,10 @@ public class DjAdapter extends RecyclerView.Adapter<DjAdapter.DjViewHolder> {
 
     public void updateData(List<Dj> newItems) {
         this.DJs = newItems;
+        notifyDataSetChanged();
     }
 
-    public static class DjViewHolder extends RecyclerView.ViewHolder {
+    public class DjViewHolder extends RecyclerView.ViewHolder {
         private TextView stageName, genre;
 
         public DjViewHolder(@NonNull View itemView) {
@@ -52,11 +64,15 @@ public class DjAdapter extends RecyclerView.Adapter<DjAdapter.DjViewHolder> {
             genre = itemView.findViewById(R.id.djGenreTextView);
         }
 
-        public void bind(Dj Dj) {
-            stageName.setText(Dj.getStageName());
-            genre.setText(Dj.getGenres().toString());
+        public void bind(Dj dj) {
+            stageName.setText(dj.getStageName());
+            if (dj.getGenres() != null) {
+                genre.setText(String.join(", ", dj.getGenres()));
+            }
+//            itemView is the whole item itself, and we set an onClickListener on it(the legacy method) and we choosing that upon click we will call the "onDjClick"
+            itemView.setOnClickListener(v -> {
+                if (listener != null) listener.onDjClick(dj);
+            });
         }
-
-
     }
 }

@@ -11,7 +11,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
-        android:text="Live now" />
+        android:text="Live now"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/clubsRecyclerView"
@@ -24,19 +27,15 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:layout_marginBottom="12dp"
-        android:text="All DJs" />
+        android:text="Popular DJs"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
-    /><androidx.recyclerview.widget.RecyclerView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/DJsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal" />
-    />
 
 </LinearLayout>
-
-
-
-
-
-

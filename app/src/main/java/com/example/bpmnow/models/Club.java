@@ -1,50 +1,44 @@
 package com.example.bpmnow.models;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class Club {
     private String name;
-    private ArrayList<String> genres;
+    private List<String> genres;
     private String distance;
     private String currentDJ;
+    private int imageResId;
 
-    public Club(String name, ArrayList<String> genres, String distance, String currentDJ) {
+    // No-arg constructor required for Firestore
+    public Club() {}
+
+    public Club(String name, List<String> genres, String distance, String currentDJ) {
         this.name = name;
         this.genres = genres;
         this.distance = distance;
         this.currentDJ = currentDJ;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public ArrayList<String> getGenres() {
-        return genres;
-    }
-
-    public String getDistance() {
-        return distance;
-    }
-
-    public String getCurrentDJ() {
-        return currentDJ;
-    }
-
-    public void setName(String name) {
+    public Club(String name, List<String> genres, String distance, String currentDJ, int imageResId) {
         this.name = name;
-    }
-
-    public void setGenres(ArrayList<String> genres) {
         this.genres = genres;
-    }
-
-    public void setDistance(String distance) {
         this.distance = distance;
-    }
-
-    public void setCurrentDJ(String currentDJ) {
         this.currentDJ = currentDJ;
+        this.imageResId = imageResId;
     }
 
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public List<String> getGenres() { return genres; }
+    public void setGenres(List<String> genres) { this.genres = genres; }
+
+    public String getDistance() { return distance; }
+    public void setDistance(String distance) { this.distance = distance; }
+
+    public String getCurrentDJ() { return currentDJ; }
+    public void setCurrentDJ(String currentDJ) { this.currentDJ = currentDJ; }
+
+    public int getImageResId() { return imageResId; }
+    public void setImageResId(int imageResId) { this.imageResId = imageResId; }
 }

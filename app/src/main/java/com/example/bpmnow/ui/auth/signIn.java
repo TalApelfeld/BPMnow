@@ -15,6 +15,8 @@ import android.widget.Toast;
 
 import com.example.bpmnow.MainActivity;
 import com.example.bpmnow.R;
+import com.example.bpmnow.network.FirebaseAuthConnection;
+import com.example.bpmnow.network.FirebaseDBConnection;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
@@ -22,6 +24,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -38,8 +41,7 @@ public class signIn extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
-
-    private FirebaseAuth mAuth;
+    private String userRole;
 
     public signIn() {
         // Required empty public constructor
@@ -77,19 +79,6 @@ public class signIn extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_sign_in, container, false);
-
-        TextView toSignUpPageBtn = view.findViewById(R.id.toSignUpPageBtn);
-        toSignUpPageBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                NavHostFragment.findNavController(signIn.this).navigate(R.id.action_signIn_to_signUp);
-            }
-        });
-
-        // Initialize Firebase Auth
-        mAuth = FirebaseAuth.getInstance();
-
-
         return view;
     }
 
@@ -97,27 +86,31 @@ public class signIn extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        TextView toSignUpPageBtn = view.findViewById(R.id.toSignUpPageBtn);
         MaterialButton loginBtn = view.findViewById(R.id.logInBtn);
 
+        toSignUpPageBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                NavHostFragment.findNavController(signIn.this).navigate(R.id.action_signIn_to_signUp);
+            }
+        });
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 TextInputEditText emailField = view.findViewById(R.id.emailTextInputEditText);
                 TextInputEditText passwordField = view.findViewById(R.id.passwordTextInputEditText);
                 String email = emailField.getText().toString().trim();
                 String password = passwordField.getText().toString().trim();
 
-                mAuth.signInWithEmailAndPassword(email, password)
+                FirebaseAuthConnection.getInstance().getAuth().signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener(requireActivity(), new OnCompleteListener<AuthResult>() {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if (task.isSuccessful()) {
                                     // Sign in success, update UI with the signed-in user's information
-                                    FirebaseUser user = mAuth.getCurrentUser();
-                                    NavHostFragment.findNavController(signIn.this).navigate(R.id.action_signIn_to_roleSelection);
-                                    ((MainActivity) requireActivity()).startSpotifyLogin();
-
+                                    FirebaseUser user = FirebaseAuthConnection.getInstance().getAuth().getCurrentUser();
+                                    userExistsInDB(email);
                                 } else {
                                     // If sign in fails, display a message to the user.
                                     Toast.makeText(requireActivity(), "Authentication failed.",
@@ -127,7 +120,29 @@ public class signIn extends Fragment {
                         });
             }
         });
-
-
     }
+
+    private void userExistsInDB(String email) {
+        FirebaseDBConnection.getInstance().getDB().collection("users")
+                .whereEqualTo("uid", FirebaseAuthConnection.getInstance().getUserId())
+                .get().addOnSuccessListener(querySnapshot -> {
+                    DocumentSnapshot document = querySnapshot.getDocuments().get(0);
+                    String role = document.getString("role");
+                    // use role here
+                    userRole = role;
+
+                    if (userRole.equals("dj")) {
+                        ((MainActivity) requireActivity()).switchToGraphDJ();
+                    } else if (userRole.equals("clubber")) {
+                        ((MainActivity) requireActivity()).switchToGraphClubber();
+                    } else {
+                        NavHostFragment.findNavController(signIn.this).navigate(R.id.action_signIn_to_roleSelection);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // handle error
+                    NavHostFragment.findNavController(signIn.this).navigate(R.id.action_signIn_to_roleSelection);
+                });
+    }
+
 }

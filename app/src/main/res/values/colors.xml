@@ -52,6 +52,9 @@
     <color name="bottom_nav_selected">#FF7C4DFF</color>
     <color name="bottom_nav_unselected">#66FFFFFF</color>
 
+    <!-- Text colors -->
+    <color name="text_secondary">#B3FFFFFF</color>
+
     <!-- Gradient helpers -->
     <color name="glow_purple_start">#807C4DFF</color>
     <color name="glow_purple_end">#007C4DFF</color>

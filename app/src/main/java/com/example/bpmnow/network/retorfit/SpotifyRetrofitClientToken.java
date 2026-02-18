@@ -1,4 +1,6 @@
-package com.example.bpmnow.network;
+package com.example.bpmnow.network.retorfit;
+
+import com.example.bpmnow.network.services.SpotifyTokenApiService;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;

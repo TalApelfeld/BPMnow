@@ -16,59 +16,63 @@ import androidx.navigation.Navigation;
 
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import com.example.bpmnow.MainActivity;
 import com.example.bpmnow.R;
+import com.example.bpmnow.network.FirebaseAuthConnection;
+import com.example.bpmnow.network.FirebaseDBConnection;
 import com.example.bpmnow.utils.Constants;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link formDJ#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class formDJ extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private static final String TAG = "formDJ";
     private List<String> allGenres = Constants.GENRES;
-
     private Set<String> selectedGenres = new HashSet<>();
     private Uri selectedImageUri;
     private ShapeableImageView profileImageView;
+    private TextInputEditText stageNameInput;
+    private TextInputEditText ageInput;
+    private TextInputEditText bioInput;
+    private MaterialAutoCompleteTextView clubAutoComplete;
+    private String selectedClub = "";
+
     private final ActivityResultLauncher<String> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null) {
                     selectedImageUri = uri;
-                    profileImageView.setImageURI(uri); // works because it's a field
+                    profileImageView.setImageURI(uri);
                 }
             });
-    // correct - permission launcher should be <String> for input but the callback receives Boolean
+
     private final ActivityResultLauncher<String> permissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted != null && isGranted) {
                     pickImageLauncher.launch("image/*");
                 } else {
-                    // on Android 14, partial access still allows picking
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                         pickImageLauncher.launch("image/*");
                     } else {
@@ -82,20 +86,11 @@ public class formDJ extends Fragment {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment formDJ.
-     */
-    // TODO: Rename and change types and number of parameters
     public static formDJ newInstance(String param1, String param2) {
         formDJ fragment = new formDJ();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putString("param1", param1);
+        args.putString("param2", param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -103,32 +98,30 @@ public class formDJ extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_form_d_j, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // get views manually since you're not using ViewBinding
-        ChipGroup genreChipGroup = view.findViewById(R.id.genreChipGroup);
+
+        stageNameInput = view.findViewById(R.id.stageNameInput);
         TextInputEditText genreSearchInput = view.findViewById(R.id.genreSearchInput);
+        ChipGroup genreChipGroup = view.findViewById(R.id.genreChipGroup);
+        ageInput = view.findViewById(R.id.ageInput);
+        bioInput = view.findViewById(R.id.bioInput);
+        profileImageView = view.findViewById(R.id.profileImageView);
+        MaterialButton btnFormContinue = view.findViewById(R.id.btnFormContinueDJ);
 
         setupGenreChips(genreChipGroup, allGenres);
         setupSearch(genreSearchInput, genreChipGroup);
 
-        profileImageView = view.findViewById(R.id.profileImageView);
 
-        // in onViewCreated replace the click listener with this
         profileImageView.setOnClickListener(v -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 if (ContextCompat.checkSelfPermission(requireContext(),
@@ -155,24 +148,106 @@ public class formDJ extends Fragment {
                 }
             }
         });
-
-        MaterialButton btnFormContinue = view.findViewById(R.id.btnFormContinueDJ);
         btnFormContinue.setOnClickListener(v -> {
-            // Handle continue button click
-            Navigation.findNavController(v).navigate(R.id.action_formDJ_to_homeDJ);
+            if (validateForm()) {
+                saveToFirestoreAndNavigate(v);
+            }
         });
+    }
+
+    private boolean validateForm() {
+        String stageName = stageNameInput.getText() != null ? stageNameInput.getText().toString().trim() : "";
+        String ageStr = ageInput.getText() != null ? ageInput.getText().toString().trim() : "";
+
+        if (stageName.isEmpty()) {
+            Toast.makeText(requireContext(), "Please enter a stage name", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (ageStr.isEmpty()) {
+            Toast.makeText(requireContext(), "Please enter your age", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (selectedGenres.isEmpty()) {
+            Toast.makeText(requireContext(), "Please select at least one genre", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
+    private void saveToFirestoreAndNavigate(View v) {
+        // Navigate to dashboard
+        Navigation.findNavController(v).navigate(R.id.action_formDJ_to_dashboardDJ);
+
+        String uid = FirebaseAuthConnection.getInstance().getUserId();
+        String stageName = stageNameInput.getText().toString().trim();
+        int age = Integer.parseInt(ageInput.getText().toString().trim());
+        String bio = bioInput.getText() != null ? bioInput.getText().toString().trim() : "";
+
+        // Save to users collection
+        Map<String, Object> userData = new HashMap<>();
+//        Need to pay attention that we store uid same as it appears in the 'auth' collection,
+        userData.put("uid", uid);
+        userData.put("stageName", stageName);
+        userData.put("age", age);
+        userData.put("bio", bio);
+        userData.put("genres", new ArrayList<>(selectedGenres));
+        userData.put("role", Constants.ROLE_DJ);
+        userData.put("profileImageUrl", selectedImageUri != null ? selectedImageUri.toString() : "");
+        userData.put("createdAt", Timestamp.now());
+
+        // Save to djProfiles collection
+        Map<String, Object> djProfileData = new HashMap<>();
+        djProfileData.put("uid", uid);
+        djProfileData.put("stageName", stageName);
+        djProfileData.put("bio", bio);
+        djProfileData.put("age", age);
+        djProfileData.put("genres", new ArrayList<>(selectedGenres));
+        djProfileData.put("profileImageUrl", selectedImageUri != null ? selectedImageUri.toString() : "");
+        djProfileData.put("totalLikes", 0);
+        djProfileData.put("totalRequests", 0);
+        djProfileData.put("totalFeedback", 0);
+        djProfileData.put("playlistsIds", new ArrayList<String>());
+        djProfileData.put("createdAt", Timestamp.now());
+
+        // Write both documents
+        FirebaseDBConnection.getInstance().getDB().collection(Constants.COLLECTION_USERS).document(uid).set(userData)
+                .addOnSuccessListener(aVoid -> {
+                    FirebaseDBConnection.getInstance().getDB().collection(Constants.COLLECTION_DJ_PROFILES).document(uid).set(djProfileData)
+                            .addOnSuccessListener(aVoid2 -> {
+                                Log.d(TAG, "DJ profile saved to Firestore");
+                                // Save role to SharedPreferences
+                                requireContext().getSharedPreferences(Constants.PREFS_NAME, 0)
+                                        .edit()
+                                        .putString(Constants.PREF_USER_ROLE, Constants.ROLE_DJ)
+                                        .putString(Constants.PREF_USER_UID, uid)
+                                        .putString(Constants.PREF_USER_NAME, stageName)
+                                        .putBoolean(Constants.PREF_IS_LOGGED_IN, true)
+                                        .apply();
+
+                                // Trigger Spotify OAuth
+                                ((MainActivity) requireActivity()).startSpotifyLogin();
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Error saving DJ profile", e);
+                                Toast.makeText(requireContext(),
+                                        "Failed to save DJ profile: " + e.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error saving user data", e);
+                    Toast.makeText(requireContext(), "Failed to save profile: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void setupGenreChips(ChipGroup chipGroup, List<String> genres) {
         chipGroup.removeAllViews();
-
         for (String genre : genres) {
-            Chip chip = new Chip(requireContext(), null,
-                    com.google.android.material.R.attr.chipStyle);
+            Chip chip = new Chip(new ContextThemeWrapper(requireContext(), R.style.Widget_BPMnow_Chip));
             chip.setText(genre);
             chip.setCheckable(true);
             chip.setChecked(selectedGenres.contains(genre));
-
             chip.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (isChecked) {
                     selectedGenres.add(genre);
@@ -180,7 +255,6 @@ public class formDJ extends Fragment {
                     selectedGenres.remove(genre);
                 }
             });
-
             chipGroup.addView(chip);
         }
     }
@@ -215,4 +289,5 @@ public class formDJ extends Fragment {
     public Set<String> getSelectedGenres() {
         return selectedGenres;
     }
+
 }

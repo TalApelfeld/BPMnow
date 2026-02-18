@@ -3,7 +3,9 @@ package com.example.bpmnow;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.SystemBarStyle;
@@ -16,13 +18,16 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
+import com.example.bpmnow.network.FirebaseAuthConnection;
+import com.example.bpmnow.network.FirebaseDBConnection;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 public class MainActivity extends AppCompatActivity {
-    private FirebaseAuth mAuth;
+    //    private FirebaseAuth mAuth;
     private NavController navController;
+    private String userRole;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,59 +44,83 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Initialize Firebase Auth
-        mAuth = FirebaseAuth.getInstance();
 
         // Get NavController from NavHostFragment
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragmentContainerView);
         navController = navHostFragment.getNavController();
 
+
         // Set initial graph
-        navController.setGraph(R.navigation.nav_graph);
+//        navController.setGraph(R.navigation.nav_graph);
 
     }
 
     @Override
     public void onStart() {
         super.onStart();
-
-        // Check if user is signed in (non-null) and navigate accordingly
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-
-        // If user is not signed in, navigate to signIn fragment
-        if (currentUser != null) {
-            navController.navigate(R.id.roleSelection);
-        } else {
-            navController.navigate(R.id.signIn);
-        }
+        setInitialNavigation();
     }
 
     // Method to switch navigation graphs
     public void switchToGraphClubber() {
         navController.setGraph(R.navigation.nav_graph_clubber);
-        findViewById(R.id.bottom_navigation_clubber).setVisibility(View.GONE);
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation_clubber);
+        NavigationUI.setupWithNavController(bottomNav, navController);
+
+        // Force highlight sync — NavigationUI sometimes fails on popBackStack to start destination
+        bottomNav.setOnItemSelectedListener(item -> {
+            boolean handled = NavigationUI.onNavDestinationSelected(item, navController);
+            if (!handled) {
+                navController.popBackStack(item.getItemId(), false);
+            }
+            item.setChecked(true);
+            return true;
+        });
     }
 
     public void switchToGraphDJ() {
         navController.setGraph(R.navigation.nav_graph_dj);
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation_dj);
+        NavigationUI.setupWithNavController(bottomNav, navController);
+
+        // Force highlight sync — NavigationUI sometimes fails on popBackStack to start destination
+        bottomNav.setOnItemSelectedListener(item -> {
+            boolean handled = NavigationUI.onNavDestinationSelected(item, navController);
+            if (!handled) {
+                navController.popBackStack(item.getItemId(), false);
+            }
+            item.setChecked(true);
+            return true;
+        });
     }
+
+    //    Because we want to set the home fragment of dj to be the "dashboard",
+//    Upon entering the app after you closed it ('create' methods runs again), we need this function
+//    in the "roleSelection" fragment to specifically move to the role "formDj" after roleSelection
+//    Because if we just set the graph after the role selection, then it will automatically will go to 'dashboard'
+    public void switchToFormDJ() {
+        navController.setGraph(R.navigation.nav_graph_dj);
+        navController.navigate(R.id.formDJ);
+    }
+
 
     //    Set the visibility of the bottom navigation bar & connect it to the NavController
 //    To be able to navigate between fragments
     public void setClubberBottomNavigationVisible() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation_clubber);
-        NavigationUI.setupWithNavController(bottomNav, navController);
         bottomNav.setVisibility(View.VISIBLE);
     }
 
     public void setDJBottomNavigationVisible() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation_dj);
-        NavigationUI.setupWithNavController(bottomNav, navController);
         bottomNav.setVisibility(View.VISIBLE);
     }
 
-    public void setBottomNavigationInvisible() {
+    public void setBottomDJNavigationInvisible() {
+        findViewById(R.id.bottom_navigation_dj).setVisibility(View.GONE);
+    }
+    public void setBottomClubberNavigationInvisible() {
         findViewById(R.id.bottom_navigation_clubber).setVisibility(View.GONE);
     }
 
@@ -118,5 +147,39 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void setInitialNavigation() {
+        FirebaseUser currentUser = FirebaseAuthConnection.getInstance().getAuth().getCurrentUser();
+        // Check if user is signed in (non-null) and navigate accordingly
+        if (currentUser != null) {
+            Log.d("MainActivity", "There is a user");
+            setNavigationOnUserRole();
+        } else {
+            // If user is not signed in, navigate to signIn fragment
+            navController.setGraph(R.navigation.nav_graph);
+            navController.navigate(R.id.signIn);
+        }
+    }
 
+    private void setNavigationOnUserRole() {
+        FirebaseDBConnection.getInstance().getDB().collection("users")
+                .whereEqualTo("uid", FirebaseAuthConnection.getInstance().getUserId())
+                .get().addOnSuccessListener(querySnapshot -> {
+                    Log.d("MainActivity", FirebaseAuthConnection.getInstance().getUserId());
+                    DocumentSnapshot document = querySnapshot.getDocuments().get(0);
+                    String role = document.getString("role");
+
+                    // use role here
+                    userRole = role;
+
+                    if (userRole.equals("dj")) {
+                        switchToGraphDJ();
+                    } else {
+                        switchToGraphClubber();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // handle error
+                    Toast.makeText(this, "Error getting user role", Toast.LENGTH_SHORT).show();
+                });
+    }
 }

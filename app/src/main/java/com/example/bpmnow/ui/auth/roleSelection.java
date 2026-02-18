@@ -125,7 +125,7 @@ public class roleSelection extends Fragment {
 //                and just change the navigation graphs, and we do this from the main activity, but we cant access
 //                the elements of the fragment from the activity so we can do this)
 
-            ((MainActivity) requireActivity()).switchToGraphDJ();
+            ((MainActivity) requireActivity()).switchToFormDJ();
         }
     }
 }
