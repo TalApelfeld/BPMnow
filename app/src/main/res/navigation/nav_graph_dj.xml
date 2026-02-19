@@ -25,7 +25,17 @@
         android:id="@+id/requestsDJ"
         android:name="com.example.bpmnow.ui.dj.requestsDJ"
         android:label="Requests"
-        tools:layout="@layout/fragment_requests_d_j" />
+        tools:layout="@layout/fragment_requests_d_j">
+        <action
+            android:id="@+id/action_requestsDJ_to_trackReviewsDJ"
+            app:destination="@id/trackReviewsDJ" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/trackReviewsDJ"
+        android:name="com.example.bpmnow.ui.dj.trackReviewsDJ"
+        android:label="Track Reviews"
+        tools:layout="@layout/fragment_track_reviews_dj" />
 
     <fragment
         android:id="@+id/clubsDJ"

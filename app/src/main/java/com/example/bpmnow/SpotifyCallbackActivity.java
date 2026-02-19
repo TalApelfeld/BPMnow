@@ -13,16 +13,13 @@ import com.example.bpmnow.models.spotify.SpotifyPlaylist;
 import com.example.bpmnow.models.spotify.SpotifyPlaylistTracksResponse;
 import com.example.bpmnow.models.spotify.SpotifyPlaylistsResponse;
 import com.example.bpmnow.models.spotify.SpotifyTrackItem;
+import com.example.bpmnow.db.DjProfilesManager;
+import com.example.bpmnow.db.PlaylistsManager;
+import com.example.bpmnow.db.TracksManager;
 import com.example.bpmnow.network.FirebaseAuthConnection;
-import com.example.bpmnow.network.FirebaseDBConnection;
 import com.example.bpmnow.network.retorfit.SpotifyRetrofitClient;
-import com.example.bpmnow.ui.dj.profileDJ;
 import com.example.bpmnow.utils.Constants;
 import com.example.bpmnow.utils.SpotifyTokenManager;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.WriteBatch;
-import com.google.gson.Gson;
 
 import org.json.JSONObject;
 
@@ -197,9 +194,8 @@ public class SpotifyCallbackActivity extends AppCompatActivity {
 
     private List<String> savePlaylistsToDB(List<SpotifyPlaylist> playlists) {
         List<String> playlistIds = new ArrayList<>();
-        FirebaseFirestore db = FirebaseDBConnection.getInstance().getDB();
         String currentUserId = FirebaseAuthConnection.getInstance().getUserId();
-        WriteBatch batch = db.batch();
+        List<Map<String, Object>> playlistMaps = new ArrayList<>();
 
         for (SpotifyPlaylist playlist : playlists) {
             Map<String, Object> playlistMap = new HashMap<>();
@@ -217,25 +213,20 @@ public class SpotifyCallbackActivity extends AppCompatActivity {
             playlistMap.put("requests", 0);
             playlistMap.put("reviews", new ArrayList<String>());
 
-//            Add id of playlist to list, to return from function, inorder to then make requests to fetch tracks.
             playlistIds.add(playlist.getId());
-            // Auto-generate ID by calling document() with no arguments
-            DocumentReference docRef = db.collection("playlists").document();
-            batch.set(docRef, playlistMap);
+            playlistMaps.add(playlistMap);
         }
-        batch.commit()
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "All playlists saved");
-                })
+
+        PlaylistsManager.getInstance().batchSavePlaylists(playlistMaps)
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "All playlists saved"))
                 .addOnFailureListener(e -> Log.e(TAG, "Error saving playlists", e));
 
         return playlistIds;
     }
 
     private void saveTracksToDB(List<SpotifyTrackItem> tracks, String playlistId) {
-        FirebaseFirestore db = FirebaseDBConnection.getInstance().getDB();
         String currentUserId = FirebaseAuthConnection.getInstance().getUserId();
-        WriteBatch batch = db.batch();
+        List<Map<String, Object>> trackMaps = new ArrayList<>();
 
         for (SpotifyTrackItem track : tracks) {
             Map<String, Object> tracktMap = new HashMap<>();
@@ -259,29 +250,18 @@ public class SpotifyCallbackActivity extends AppCompatActivity {
             tracktMap.put("requests", 0);
             tracktMap.put("reviews", new ArrayList<String>());
 
-            // Auto-generate ID by calling document() with no arguments
-            DocumentReference docRef = db.collection(Constants.COLLECTION_TRACKS).document();
-            batch.set(docRef, tracktMap);
+            trackMaps.add(tracktMap);
         }
-        batch.commit()
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "All tracks saved");
-                })
+
+        TracksManager.getInstance().batchSaveTracks(trackMaps)
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "All tracks saved"))
                 .addOnFailureListener(e -> Log.e(TAG, "Error saving tracks", e));
     }
 
     private void savePlaylistsIdsToDB(List<String> playlistIds) {
-        FirebaseDBConnection.getInstance().getDB().
-                collection(Constants.COLLECTION_DJ_PROFILES).
-                document(FirebaseAuthConnection.getInstance().getUserId())
-                .update("playlistId", playlistIds)
-                .addOnSuccessListener(aVoid -> {
-                    // Update successful
-                    Log.d(TAG, "Playlists IDs saved to Firestore");
-                })
-                .addOnFailureListener(e -> {
-                    // Handle error
-                    Log.e(TAG, "Error saving playlists IDs to Firestore", e);
-                });
+        DjProfilesManager.getInstance().savePlaylistIds(
+                FirebaseAuthConnection.getInstance().getUserId(), playlistIds)
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Playlists IDs saved to Firestore"))
+                .addOnFailureListener(e -> Log.e(TAG, "Error saving playlists IDs to Firestore", e));
     }
 }

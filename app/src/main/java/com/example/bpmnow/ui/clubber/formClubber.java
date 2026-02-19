@@ -23,8 +23,8 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.example.bpmnow.R;
+import com.example.bpmnow.db.UsersManager;
 import com.example.bpmnow.network.FirebaseAuthConnection;
-import com.example.bpmnow.network.FirebaseDBConnection;
 import com.example.bpmnow.utils.Constants;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
@@ -32,9 +32,6 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -181,10 +178,7 @@ public class formClubber extends Fragment {
         userData.put("profileImageUrl", selectedImageUri != null ? selectedImageUri.toString() : "");
         userData.put("createdAt", Timestamp.now());
 
-        FirebaseDBConnection.getInstance().getDB()
-                .collection(Constants.COLLECTION_USERS)
-                .document(uid)
-                .set(userData)
+        UsersManager.getInstance().saveUserProfile(uid, userData)
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Clubber profile saved to Firestore");
                     // Save role to SharedPreferences for quick access

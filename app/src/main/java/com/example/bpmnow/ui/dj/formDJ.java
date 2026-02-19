@@ -26,8 +26,9 @@ import android.widget.Toast;
 
 import com.example.bpmnow.MainActivity;
 import com.example.bpmnow.R;
+import com.example.bpmnow.db.DjProfilesManager;
+import com.example.bpmnow.db.UsersManager;
 import com.example.bpmnow.network.FirebaseAuthConnection;
-import com.example.bpmnow.network.FirebaseDBConnection;
 import com.example.bpmnow.utils.Constants;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
@@ -36,9 +37,6 @@ import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -210,9 +208,9 @@ public class formDJ extends Fragment {
         djProfileData.put("createdAt", Timestamp.now());
 
         // Write both documents
-        FirebaseDBConnection.getInstance().getDB().collection(Constants.COLLECTION_USERS).document(uid).set(userData)
+        UsersManager.getInstance().saveUserProfile(uid, userData)
                 .addOnSuccessListener(aVoid -> {
-                    FirebaseDBConnection.getInstance().getDB().collection(Constants.COLLECTION_DJ_PROFILES).document(uid).set(djProfileData)
+                    DjProfilesManager.getInstance().saveDjProfile(uid, djProfileData)
                             .addOnSuccessListener(aVoid2 -> {
                                 Log.d(TAG, "DJ profile saved to Firestore");
                                 // Save role to SharedPreferences

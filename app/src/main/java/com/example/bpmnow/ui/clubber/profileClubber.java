@@ -15,15 +15,14 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.bpmnow.MainActivity;
 import com.example.bpmnow.R;
-import com.example.bpmnow.ui.dj.profileDJ;
+import com.example.bpmnow.db.UsersManager;
+import com.example.bpmnow.network.FirebaseAuthConnection;
 import com.example.bpmnow.utils.Constants;
 import com.example.bpmnow.utils.SpotifyTokenManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.imageview.ShapeableImageView;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.List;
 
@@ -33,7 +32,6 @@ public class profileClubber extends Fragment {
     private ShapeableImageView ivProfileImage;
     private TextView tvNickname, tvAge;
     private ChipGroup chipGroupGenres;
-    private FirebaseFirestore db;
     private String currentUid;
 
     public profileClubber() {}
@@ -48,9 +46,7 @@ public class profileClubber extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        db = FirebaseFirestore.getInstance();
-        currentUid = FirebaseAuth.getInstance().getCurrentUser() != null ?
-                FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+        currentUid = FirebaseAuthConnection.getInstance().getUserId();
 
         ivProfileImage = view.findViewById(R.id.ivProfileImage);
         tvNickname = view.findViewById(R.id.tvNickname);
@@ -59,7 +55,7 @@ public class profileClubber extends Fragment {
 
         MaterialButton btnLogout = view.findViewById(R.id.btnLogout);
         btnLogout.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
+            FirebaseAuthConnection.getInstance().getAuth().signOut();
             requireContext().getSharedPreferences(Constants.PREFS_NAME, 0).edit().clear().apply();
             SpotifyTokenManager.clearTokens(requireContext());
             ((MainActivity) requireActivity()).setBottomClubberNavigationInvisible();
@@ -72,8 +68,7 @@ public class profileClubber extends Fragment {
     }
 
     private void loadProfile() {
-        db.collection(Constants.COLLECTION_USERS).document(currentUid)
-                .get()
+        UsersManager.getInstance().getUserDocument(currentUid)
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         tvNickname.setText(doc.getString("nickname"));

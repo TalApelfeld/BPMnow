@@ -15,16 +15,14 @@ import android.widget.Toast;
 
 import com.example.bpmnow.MainActivity;
 import com.example.bpmnow.R;
+import com.example.bpmnow.db.UsersManager;
 import com.example.bpmnow.network.FirebaseAuthConnection;
-import com.example.bpmnow.network.FirebaseDBConnection;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -108,7 +106,7 @@ public class signIn extends Fragment {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if (task.isSuccessful()) {
-                                    // Sign in success, update UI with the signed-in user's information
+                                    // Sign in success
                                     FirebaseUser user = FirebaseAuthConnection.getInstance().getAuth().getCurrentUser();
                                     userExistsInDB(email);
                                 } else {
@@ -123,10 +121,8 @@ public class signIn extends Fragment {
     }
 
     private void userExistsInDB(String email) {
-        FirebaseDBConnection.getInstance().getDB().collection("users")
-                .whereEqualTo("uid", FirebaseAuthConnection.getInstance().getUserId())
-                .get().addOnSuccessListener(querySnapshot -> {
-                    DocumentSnapshot document = querySnapshot.getDocuments().get(0);
+        UsersManager.getInstance().getUserDocument(FirebaseAuthConnection.getInstance().getUserId())
+                .addOnSuccessListener(document -> {
                     String role = document.getString("role");
                     // use role here
                     userRole = role;

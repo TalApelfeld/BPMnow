@@ -18,12 +18,10 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
+import com.example.bpmnow.db.UsersManager;
 import com.example.bpmnow.network.FirebaseAuthConnection;
-import com.example.bpmnow.network.FirebaseDBConnection;
 import com.example.bpmnow.utils.ClubsSeeder;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot;
 
 public class MainActivity extends AppCompatActivity {
     //    private FirebaseAuth mAuth;
@@ -104,11 +102,31 @@ public class MainActivity extends AppCompatActivity {
 //    Because if we just set the graph after the role selection, then it will automatically will go to 'dashboard'
     public void switchToFormDJ() {
         navController.setGraph(R.navigation.nav_graph_dj);
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation_dj);
+        NavigationUI.setupWithNavController(bottomNav, navController);
+        bottomNav.setOnItemSelectedListener(item -> {
+            boolean handled = NavigationUI.onNavDestinationSelected(item, navController);
+            if (!handled) {
+                navController.popBackStack(item.getItemId(), false);
+            }
+            item.setChecked(true);
+            return true;
+        });
         navController.navigate(R.id.formDJ);
     }
 
     public void switchToFormClubber() {
         navController.setGraph(R.navigation.nav_graph_clubber);
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation_clubber);
+        NavigationUI.setupWithNavController(bottomNav, navController);
+        bottomNav.setOnItemSelectedListener(item -> {
+            boolean handled = NavigationUI.onNavDestinationSelected(item, navController);
+            if (!handled) {
+                navController.popBackStack(item.getItemId(), false);
+            }
+            item.setChecked(true);
+            return true;
+        });
         navController.navigate(R.id.formClubber);
     }
 
@@ -156,9 +174,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setInitialNavigation() {
-        FirebaseUser currentUser = FirebaseAuthConnection.getInstance().getAuth().getCurrentUser();
         // Check if user is signed in (non-null) and navigate accordingly
-        if (currentUser != null) {
+        if (FirebaseAuthConnection.getInstance().getAuth().getCurrentUser() != null) {
             Log.d("MainActivity", "There is a user");
             setNavigationOnUserRole();
         } else {
@@ -169,11 +186,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setNavigationOnUserRole() {
-        FirebaseDBConnection.getInstance().getDB().collection("users")
-                .whereEqualTo("uid", FirebaseAuthConnection.getInstance().getUserId())
-                .get().addOnSuccessListener(querySnapshot -> {
+        UsersManager.getInstance().getUserDocument(FirebaseAuthConnection.getInstance().getUserId())
+                .addOnSuccessListener(document -> {
                     Log.d("MainActivity", FirebaseAuthConnection.getInstance().getUserId());
-                    DocumentSnapshot document = querySnapshot.getDocuments().get(0);
                     String role = document.getString("role");
 
                     // use role here

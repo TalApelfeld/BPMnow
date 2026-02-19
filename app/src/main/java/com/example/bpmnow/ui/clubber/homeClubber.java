@@ -17,12 +17,11 @@ import com.example.bpmnow.MainActivity;
 import com.example.bpmnow.R;
 import com.example.bpmnow.adapters.ClubAdapter;
 import com.example.bpmnow.adapters.DjAdapter;
+import com.example.bpmnow.db.DjProfilesManager;
 import com.example.bpmnow.models.Club;
 import com.example.bpmnow.models.Dj;
-import com.example.bpmnow.network.FirebaseDBConnection;
 import com.example.bpmnow.utils.Constants;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,19 +115,10 @@ public class homeClubber extends Fragment {
     }
 
     private void loadPopularDJs() {
-        FirebaseDBConnection.getInstance().getDB()
-                .collection(Constants.COLLECTION_DJ_PROFILES)
-                .limit(20)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
+        DjProfilesManager.getInstance().getPopularDJs(20)
+                .addOnSuccessListener(djs -> {
                     DJItems.clear();
-                    for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        Dj dj = doc.toObject(Dj.class);
-                        if (dj != null) {
-                            dj.setDjId(doc.getId());
-                            DJItems.add(dj);
-                        }
-                    }
+                    DJItems.addAll(djs);
                     DJsAdapter.updateData(DJItems);
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Error loading DJs", e));

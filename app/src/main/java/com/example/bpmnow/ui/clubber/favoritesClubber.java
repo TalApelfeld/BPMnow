@@ -16,10 +16,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bpmnow.R;
 import com.example.bpmnow.adapters.DjAdapter;
+import com.example.bpmnow.db.DjLikesManager;
+import com.example.bpmnow.db.DjProfilesManager;
 import com.example.bpmnow.models.Dj;
-import com.example.bpmnow.utils.Constants;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.bpmnow.network.FirebaseAuthConnection;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
@@ -32,7 +32,8 @@ public class favoritesClubber extends Fragment {
     private TextView tvNoFavorites;
     private DjAdapter djAdapter;
     private List<Dj> favoriteDjs = new ArrayList<>();
-    private FirebaseFirestore db;
+    private final DjLikesManager djLikesManager = DjLikesManager.getInstance();
+    private final DjProfilesManager djProfilesManager = DjProfilesManager.getInstance();
     private String currentUid;
 
     public favoritesClubber() {}
@@ -47,9 +48,7 @@ public class favoritesClubber extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        db = FirebaseFirestore.getInstance();
-        currentUid = FirebaseAuth.getInstance().getCurrentUser() != null ?
-                FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+        currentUid = FirebaseAuthConnection.getInstance().getUserId();
 
         rvFavorites = view.findViewById(R.id.rvFavorites);
         tvNoFavorites = view.findViewById(R.id.tvNoFavorites);
@@ -72,9 +71,7 @@ public class favoritesClubber extends Fragment {
     }
 
     private void loadFavorites() {
-        db.collection(Constants.COLLECTION_DJ_LIKES)
-                .whereEqualTo("clubberId", currentUid)
-                .get()
+        djLikesManager.getLikesByClubber(currentUid)
                 .addOnSuccessListener(querySnapshot -> {
                     favoriteDjs.clear();
                     List<String> djIds = new ArrayList<>();
@@ -92,16 +89,11 @@ public class favoritesClubber extends Fragment {
 
                     // Load DJ profiles for each liked DJ
                     for (String djId : djIds) {
-                        db.collection(Constants.COLLECTION_DJ_PROFILES).document(djId)
-                                .get()
-                                .addOnSuccessListener(djDoc -> {
-                                    if (djDoc.exists()) {
-                                        Dj dj = djDoc.toObject(Dj.class);
-                                        if (dj != null) {
-                                            dj.setDjId(djDoc.getId());
-                                            favoriteDjs.add(dj);
-                                            djAdapter.updateData(favoriteDjs);
-                                        }
+                        djProfilesManager.getDjProfileAsModel(djId)
+                                .addOnSuccessListener(dj -> {
+                                    if (dj != null) {
+                                        favoriteDjs.add(dj);
+                                        djAdapter.updateData(favoriteDjs);
                                     }
                                     tvNoFavorites.setVisibility(favoriteDjs.isEmpty() ? View.VISIBLE : View.GONE);
                                     rvFavorites.setVisibility(favoriteDjs.isEmpty() ? View.GONE : View.VISIBLE);

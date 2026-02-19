@@ -21,12 +21,12 @@ import com.example.bpmnow.adapters.DjAdapter;
 import com.example.bpmnow.adapters.ClubAdapter;
 import com.example.bpmnow.models.Club;
 import com.example.bpmnow.models.Dj;
+import com.example.bpmnow.db.DjProfilesManager;
 import com.example.bpmnow.utils.Constants;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -142,28 +142,13 @@ public class searchClubber extends Fragment {
         if (query.isEmpty()) {
             djResults.clear();
             djAdapter.updateData(djResults);
+            tvNoResults.setVisibility(View.GONE);
             return;
         }
-
-        FirebaseFirestore.getInstance()
-                .collection(Constants.COLLECTION_DJ_PROFILES)
-                .orderBy("stageName")
-                .startAt(query)
-                .endAt(query + "\uf8ff")
-                .limit(20)
-                .get()
-                .addOnSuccessListener(qs -> {
-                    djResults.clear();
-                    for (com.google.firebase.firestore.DocumentSnapshot doc : qs.getDocuments()) {
-                        Dj dj = doc.toObject(Dj.class);
-                        if (dj != null) {
-                            dj.setDjId(doc.getId());
-                            djResults.add(dj);
-                        }
-                    }
-                    djAdapter.updateData(djResults);
-                    tvNoResults.setVisibility(djResults.isEmpty() ? View.VISIBLE : View.GONE);
-                });
+        djResults.clear();
+        djResults.addAll(DjProfilesManager.getInstance().searchByName(query));
+        djAdapter.updateData(djResults);
+        tvNoResults.setVisibility(djResults.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
     private void setupGenreChips() {
@@ -182,22 +167,9 @@ public class searchClubber extends Fragment {
     }
 
     private void searchByGenre(String genre) {
-        FirebaseFirestore.getInstance()
-                .collection(Constants.COLLECTION_DJ_PROFILES)
-                .whereArrayContains("genres", genre)
-                .limit(20)
-                .get()
-                .addOnSuccessListener(qs -> {
-                    djResults.clear();
-                    for (com.google.firebase.firestore.DocumentSnapshot doc : qs.getDocuments()) {
-                        Dj dj = doc.toObject(Dj.class);
-                        if (dj != null) {
-                            dj.setDjId(doc.getId());
-                            djResults.add(dj);
-                        }
-                    }
-                    djAdapter.updateData(djResults);
-                    tvNoResults.setVisibility(djResults.isEmpty() ? View.VISIBLE : View.GONE);
-                });
+        djResults.clear();
+        djResults.addAll(DjProfilesManager.getInstance().searchByGenre(genre));
+        djAdapter.updateData(djResults);
+        tvNoResults.setVisibility(djResults.isEmpty() ? View.VISIBLE : View.GONE);
     }
 }
