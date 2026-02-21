@@ -21,7 +21,6 @@ import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import com.example.bpmnow.MainActivity;
@@ -30,6 +29,7 @@ import com.example.bpmnow.db.DjProfilesManager;
 import com.example.bpmnow.db.UsersManager;
 import com.example.bpmnow.network.FirebaseAuthConnection;
 import com.example.bpmnow.utils.Constants;
+import com.example.bpmnow.utils.ImageUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -101,7 +101,7 @@ public class formDJ extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_form_d_j, container, false);
+        return inflater.inflate(R.layout.fragment_dj_form, container, false);
     }
 
     @Override
@@ -181,6 +181,12 @@ public class formDJ extends Fragment {
         int age = Integer.parseInt(ageInput.getText().toString().trim());
         String bio = bioInput.getText() != null ? bioInput.getText().toString().trim() : "";
 
+        // Convert image to Base64
+        String base64Image = "";
+        if (selectedImageUri != null) {
+            base64Image = ImageUtils.uriToBase64(requireContext(), selectedImageUri);
+        }
+
         // Save to users collection
         Map<String, Object> userData = new HashMap<>();
 //        Need to pay attention that we store uid same as it appears in the 'auth' collection,
@@ -190,7 +196,7 @@ public class formDJ extends Fragment {
         userData.put("bio", bio);
         userData.put("genres", new ArrayList<>(selectedGenres));
         userData.put("role", Constants.ROLE_DJ);
-        userData.put("profileImageUrl", selectedImageUri != null ? selectedImageUri.toString() : "");
+        userData.put("profileImageBase64", base64Image);
         userData.put("createdAt", Timestamp.now());
 
         // Save to djProfiles collection
@@ -200,7 +206,7 @@ public class formDJ extends Fragment {
         djProfileData.put("bio", bio);
         djProfileData.put("age", age);
         djProfileData.put("genres", new ArrayList<>(selectedGenres));
-        djProfileData.put("profileImageUrl", selectedImageUri != null ? selectedImageUri.toString() : "");
+        djProfileData.put("profileImageBase64", base64Image);
         djProfileData.put("totalLikes", 0);
         djProfileData.put("totalRequests", 0);
         djProfileData.put("totalFeedback", 0);

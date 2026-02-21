@@ -10,16 +10,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bpmnow.MainActivity;
 import com.example.bpmnow.R;
-import com.example.bpmnow.adapters.ClubAdapter;
-import com.example.bpmnow.adapters.DjAdapter;
+import com.example.bpmnow.adapters.ClubberClubAdapter;
+import com.example.bpmnow.adapters.ClubberDjAdapter;
 import com.example.bpmnow.db.DjProfilesManager;
-import com.example.bpmnow.models.Club;
-import com.example.bpmnow.models.Dj;
+import com.example.bpmnow.models.clubber.Club;
+import com.example.bpmnow.models.clubber.DjCardItem;
+import com.example.bpmnow.models.dj.Dj;
+import com.example.bpmnow.models.dj.DjTopTrack;
 import com.example.bpmnow.utils.Constants;
 
 
@@ -32,10 +35,10 @@ public class homeClubber extends Fragment {
     private static final String TAG = "homeClubber";
     private RecyclerView clubberRecyclerView;
     private RecyclerView DJRecyclerView;
-    private ClubAdapter clubsAdapter;
-    private DjAdapter DJsAdapter;
+    private ClubberClubAdapter clubsAdapter;
+    private ClubberDjAdapter DJsAdapter;
     private List<Club> clubItems = new ArrayList<>();
-    private List<Dj> DJItems = new ArrayList<>();
+    private List<DjCardItem> DJItems = new ArrayList<>();
 
     public homeClubber() {
     }
@@ -43,7 +46,7 @@ public class homeClubber extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_home_clubber, container, false);
+        View view = inflater.inflate(R.layout.fragment_clubber_home, container, false);
         ((MainActivity) requireActivity()).setClubberBottomNavigationVisible();
         setupClubsRecyclerView(view);
         setupDJsRecyclerView(view);
@@ -61,7 +64,7 @@ public class homeClubber extends Fragment {
         clubberRecyclerView = view.findViewById(R.id.clubsRecyclerView);
         clubberRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(),
                 LinearLayoutManager.HORIZONTAL, false));
-        clubsAdapter = new ClubAdapter(clubItems, club -> {
+        clubsAdapter = new ClubberClubAdapter(clubItems, club -> {
             // Navigate to club detail
             Bundle bundle = new Bundle();
             bundle.putString("clubName", club.getName());
@@ -72,12 +75,11 @@ public class homeClubber extends Fragment {
 
     private void setupDJsRecyclerView(View view) {
         DJRecyclerView = view.findViewById(R.id.DJsRecyclerView);
-        DJRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(),
-                LinearLayoutManager.VERTICAL, false));
-        DJsAdapter = new DjAdapter(DJItems, dj -> {
+        DJRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        DJsAdapter = new ClubberDjAdapter(DJItems, dj -> {
             // Navigate to DJ profile
             Bundle bundle = new Bundle();
-            bundle.putString("djId", dj.getDjId());
+            bundle.putString("djId", dj.getUid());
             Navigation.findNavController(view).navigate(R.id.action_home_to_djProfile, bundle);
         });
         DJRecyclerView.setAdapter(DJsAdapter);
@@ -89,37 +91,22 @@ public class homeClubber extends Fragment {
         for (String[] clubData : Constants.CLUBS) {
             String clubName = clubData[0];
             List<String> genres = Arrays.asList(clubData[1].split(","));
-            Club club = new Club(clubName, genres, "", "");
+            String imageUrl = clubData.length > 2 ? clubData[2] : "";
+            Club club = new Club(clubName, genres, "", "", imageUrl);
             clubItems.add(club);
         }
-
-//        // For each club, query the current DJ
-//        for (int i = 0; i < clubItems.size(); i++) {
-//            final int index = i;
-//            Club club = clubItems.get(index);
-//            FirebaseFirestore.getInstance()
-//                    .collection(Constants.COLLECTION_DJ_PROFILES)
-//                    .whereEqualTo("currentClub", club.getName())
-//                    .limit(1)
-//                    .get()
-//                    .addOnSuccessListener(querySnapshot -> {
-//                        if (!querySnapshot.isEmpty()) {
-//                            String djName = querySnapshot.getDocuments().get(0).getString("stageName");
-//                            club.setCurrentDJ(djName != null ? djName : "");
-//                        }
-//                        clubsAdapter.updateData(clubItems);
-//                    });
-//        }
-
+        // Update the adapter with the new data
         clubsAdapter.updateData(clubItems);
     }
 
     private void loadPopularDJs() {
         DjProfilesManager.getInstance().getPopularDJs(20)
-                .addOnSuccessListener(djs -> {
+                .addOnSuccessListener(querySnapshot -> {
                     DJItems.clear();
-                    DJItems.addAll(djs);
+                    DJItems.addAll(querySnapshot.toObjects(DjCardItem.class));
                     DJsAdapter.updateData(DJItems);
+//                    Chache DJs inorder to use in search
+                    DjProfilesManager.getInstance().setCachedDjs(DJItems);
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Error loading DJs", e));
     }

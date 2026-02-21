@@ -1,4 +1,4 @@
-package com.example.bpmnow.models;
+package com.example.bpmnow.models.token;
 
 public class ResponseRefreshToken {
     private String access_token;

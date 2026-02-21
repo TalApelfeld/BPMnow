@@ -18,6 +18,9 @@ import com.example.bpmnow.R;
 import com.example.bpmnow.db.UsersManager;
 import com.example.bpmnow.network.FirebaseAuthConnection;
 import com.example.bpmnow.utils.Constants;
+import com.example.bpmnow.utils.ImageUtils;
+
+import android.graphics.Bitmap;
 import com.example.bpmnow.utils.SpotifyTokenManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
@@ -39,7 +42,7 @@ public class profileClubber extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_profile_clubber, container, false);
+        return inflater.inflate(R.layout.fragment_clubber_profile, container, false);
     }
 
     @Override
@@ -74,6 +77,15 @@ public class profileClubber extends Fragment {
                         tvNickname.setText(doc.getString("nickname"));
                         Long age = doc.getLong("age");
                         tvAge.setText(age != null ? age + " years old" : "");
+
+                        // Load profile image
+                        String base64 = doc.getString("profileImageBase64");
+                        if (base64 != null && !base64.isEmpty()) {
+                            Bitmap bitmap = ImageUtils.base64ToBitmap(base64);
+                            if (bitmap != null) {
+                                ivProfileImage.setImageBitmap(bitmap);
+                            }
+                        }
 
                         chipGroupGenres.removeAllViews();
                         List<String> genres = (List<String>) doc.get("genres");

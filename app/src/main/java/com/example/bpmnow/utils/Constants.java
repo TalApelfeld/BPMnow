@@ -23,17 +23,6 @@ public final class Constants {
     public static final String ROLE_CLUBBER = "clubber";
     public static final String ROLE_DJ = "dj";
 
-    // Song request statuses
-    public static final String STATUS_PENDING = "pending";
-    public static final String STATUS_ACCEPTED = "accepted";
-    public static final String STATUS_REJECTED = "rejected";
-    public static final String STATUS_PLAYED = "played";
-
-    // Intent extras
-    public static final String EXTRA_DJ_ID = "extra_dj_id";
-    public static final String EXTRA_SESSION_ID = "extra_session_id";
-    public static final String EXTRA_USER_ROLE = "extra_user_role";
-
     // SharedPreferences
     public static final String PREFS_NAME = "dj_crowd_connect_prefs";
     public static final String PREF_USER_ROLE = "user_role";
@@ -49,16 +38,24 @@ public final class Constants {
             "Dubstep", "Trap", "Funk", "Disco"
     );
 
-    // Predefined Clubs
+    // Predefined Clubs — {name, genres, imageUrl}
     public static final String[][] CLUBS = {
-            {"Velvet Underground", "House,Deep House,Techno"},
-            {"Neon Nights", "EDM,Progressive,Trance"},
-            {"The Bassment", "Drum & Bass,Dubstep,Trap"},
-            {"Studio 54", "Disco,Funk,House"},
-            {"Warehouse Project", "Techno,Minimal,Deep House"},
-            {"Paradise Garage", "House,Disco,R&B"},
-            {"Berghain TLV", "Techno,Minimal,Progressive"},
-            {"Rhythm Factory", "Hip-Hop,Trap,Afrobeats"},
+            {"Velvet Underground", "House,Deep House,Techno",
+                    "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400"},
+            {"Neon Nights", "EDM,Progressive,Trance",
+                    "https://images.unsplash.com/photo-1571266028243-3716f02d2d25?w=400"},
+            {"The Bassment", "Drum & Bass,Dubstep,Trap",
+                    "https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400"},
+            {"Studio 54", "Disco,Funk,House",
+                    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400"},
+            {"Warehouse Project", "Techno,Minimal,Deep House",
+                    "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=400"},
+            {"Paradise Garage", "House,Disco,R&B",
+                    "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400"},
+            {"Berghain TLV", "Techno,Minimal,Progressive",
+                    "https://images.unsplash.com/photo-1571151424460-2a1405e3a2e4?w=400"},
+            {"Rhythm Factory", "Hip-Hop,Trap,Afrobeats",
+                    "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400"},
     };
 
     // Helper to get club names list

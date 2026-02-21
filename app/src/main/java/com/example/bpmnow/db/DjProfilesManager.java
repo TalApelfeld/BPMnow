@@ -1,6 +1,7 @@
 package com.example.bpmnow.db;
 
-import com.example.bpmnow.models.Dj;
+import com.example.bpmnow.models.clubber.DjCardItem;
+import com.example.bpmnow.models.dj.Dj;
 import com.example.bpmnow.network.FirebaseDBConnection;
 import com.example.bpmnow.utils.Constants;
 import com.google.android.gms.tasks.Task;
@@ -8,6 +9,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +19,8 @@ public class DjProfilesManager {
     private static volatile DjProfilesManager instance;
     private final FirebaseFirestore db = FirebaseDBConnection.getInstance().getDB();
 
-    // Cached DJ list populated by getPopularDJs(), used by search methods
-    private List<Dj> cachedDjs = new ArrayList<>();
+    // Cached DJ list populated by getPopularDJs(), used by search methods in 'search' fragment of clubber
+    private List<DjCardItem> cachedDjCardItmes = new ArrayList<>();
 
     private DjProfilesManager() {
     }
@@ -34,38 +36,26 @@ public class DjProfilesManager {
         return instance;
     }
 
-    public List<Dj> getCachedDjs() {
-        return cachedDjs;
+    public List<DjCardItem> getCachedDjs() {
+        return cachedDjCardItmes;
     }
 
-    public Task<List<Dj>> getPopularDJs(int limit) {
+    public void setCachedDjs(List<DjCardItem> cachedDjs) {
+        this.cachedDjCardItmes = cachedDjs;
+    }
+
+    public Task<QuerySnapshot> getPopularDJs(int limit) {
         return db.collection(Constants.COLLECTION_DJ_PROFILES)
                 .orderBy("totalRequests", Query.Direction.DESCENDING)
                 .limit(limit)
-                .get()
-                .continueWith(task -> {
-                    List<Dj> djs = new ArrayList<>();
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        for (DocumentSnapshot doc : task.getResult().getDocuments()) {
-                            Dj dj = doc.toObject(Dj.class);
-                            if (dj != null) {
-                                dj.setDjId(doc.getId());
-                                djs.add(dj);
-                            }
-                        }
-                    }
-                    cachedDjs = new ArrayList<>(djs);
-                    return djs;
-                });
+                .get();
     }
 
-    /**
-     * Search cached DJs by stage name (case-insensitive contains).
-     */
-    public List<Dj> searchByName(String query) {
-        List<Dj> results = new ArrayList<>();
+//      Search cached DJs by stage name (case-insensitive contains).
+    public List<DjCardItem> searchByName(String query) {
+        List<DjCardItem> results = new ArrayList<>();
         String lowerQuery = query.toLowerCase();
-        for (Dj dj : cachedDjs) {
+        for (DjCardItem dj : cachedDjCardItmes) {
             if (dj.getStageName() != null &&
                     dj.getStageName().toLowerCase().contains(lowerQuery)) {
                 results.add(dj);
@@ -74,12 +64,11 @@ public class DjProfilesManager {
         return results;
     }
 
-    /**
-     * Filter cached DJs by genre.
-     */
-    public List<Dj> searchByGenre(String genre) {
-        List<Dj> results = new ArrayList<>();
-        for (Dj dj : cachedDjs) {
+
+//      Filter cached DJs by genre.
+    public List<DjCardItem> searchByGenre(String genre) {
+        List<DjCardItem> results = new ArrayList<>();
+        for (DjCardItem dj : cachedDjCardItmes) {
             if (dj.getGenres() != null && dj.getGenres().contains(genre)) {
                 results.add(dj);
             }
@@ -91,21 +80,6 @@ public class DjProfilesManager {
         return db.collection(Constants.COLLECTION_DJ_PROFILES)
                 .document(djId)
                 .get();
-    }
-
-    public Task<Dj> getDjProfileAsModel(String djId) {
-        return db.collection(Constants.COLLECTION_DJ_PROFILES)
-                .document(djId)
-                .get()
-                .continueWith(task -> {
-                    DocumentSnapshot doc = task.getResult();
-                    if (doc != null && doc.exists()) {
-                        Dj dj = doc.toObject(Dj.class);
-                        if (dj != null) dj.setDjId(doc.getId());
-                        return dj;
-                    }
-                    return null;
-                });
     }
 
     public Task<Void> saveDjProfile(String uid, Map<String, Object> djProfileData) {

@@ -9,7 +9,7 @@
         android:id="@+id/formClubber"
         android:name="com.example.bpmnow.ui.clubber.formClubber"
         android:label="fragment_form_clubber"
-        tools:layout="@layout/fragment_form_clubber">
+        tools:layout="@layout/fragment_clubber_form">
         <action
             android:id="@+id/action_formClubber_to_homeClubber"
             app:destination="@id/homeClubber" />
@@ -19,7 +19,7 @@
         android:id="@+id/homeClubber"
         android:name="com.example.bpmnow.ui.clubber.homeClubber"
         android:label="homeClubber"
-        tools:layout="@layout/fragment_home_clubber">
+        tools:layout="@layout/fragment_clubber_home">
         <action
             android:id="@+id/action_home_to_clubDetail"
             app:destination="@id/clubDetailClubber" />
@@ -32,7 +32,7 @@
         android:id="@+id/searchClubber"
         android:name="com.example.bpmnow.ui.clubber.searchClubber"
         android:label="fragment_search_clubber"
-        tools:layout="@layout/fragment_search_clubber">
+        tools:layout="@layout/fragment_clubber_search">
         <action
             android:id="@+id/action_search_to_clubDetail"
             app:destination="@id/clubDetailClubber" />
@@ -45,7 +45,7 @@
         android:id="@+id/favoritesClubber"
         android:name="com.example.bpmnow.ui.clubber.favoritesClubber"
         android:label="fragment_favorites_clubber"
-        tools:layout="@layout/fragment_favorites_clubber">
+        tools:layout="@layout/fragment_clubber_favorites">
         <action
             android:id="@+id/action_favorites_to_djProfile"
             app:destination="@id/djProfileClubber" />
@@ -55,14 +55,14 @@
         android:id="@+id/profileClubber"
         android:name="com.example.bpmnow.ui.clubber.profileClubber"
         android:label="fragment_profile_clubber"
-        tools:layout="@layout/fragment_profile_clubber" />
+        tools:layout="@layout/fragment_clubber_profile" />
 
     <!-- New fragments -->
     <fragment
         android:id="@+id/clubDetailClubber"
         android:name="com.example.bpmnow.ui.clubber.clubDetailClubber"
         android:label="Club Detail"
-        tools:layout="@layout/fragment_club_detail_clubber">
+        tools:layout="@layout/fragment_clubber_club_detail">
         <argument
             android:name="clubName"
             app:argType="string" />
@@ -75,7 +75,7 @@
         android:id="@+id/djProfileClubber"
         android:name="com.example.bpmnow.ui.clubber.djProfileClubber"
         android:label="DJ Profile"
-        tools:layout="@layout/fragment_dj_profile_clubber">
+        tools:layout="@layout/fragment_clubber_dj_profile">
         <argument
             android:name="djId"
             app:argType="string" />
@@ -88,7 +88,7 @@
         android:id="@+id/playlistDetailClubber"
         android:name="com.example.bpmnow.ui.clubber.playlistDetailClubber"
         android:label="Playlist"
-        tools:layout="@layout/fragment_playlist_detail_clubber">
+        tools:layout="@layout/fragment_clubber_tracks">
         <argument
             android:name="djId"
             app:argType="string" />

@@ -9,7 +9,7 @@
         android:id="@+id/signUp"
         android:name="com.example.bpmnow.ui.auth.signUp"
         android:label="fragment_sign_up"
-        tools:layout="@layout/fragment_sign_up">
+        tools:layout="@layout/fragment_auth_sign_up">
         <action
             android:id="@+id/action_signUp_to_signIn"
             app:destination="@id/signIn" />
@@ -24,7 +24,7 @@
         android:id="@+id/signIn"
         android:name="com.example.bpmnow.ui.auth.signIn"
         android:label="fragment_sign_in"
-        tools:layout="@layout/fragment_sign_in">
+        tools:layout="@layout/fragment_auth_sign_in">
         <action
             android:id="@+id/action_signIn_to_signUp"
             app:destination="@id/signUp" />
@@ -39,7 +39,7 @@
         android:id="@+id/roleSelection"
         android:name="com.example.bpmnow.ui.auth.roleSelection"
         android:label="roleSelection"
-        tools:layout="@layout/fragment_role_selection">
+        tools:layout="@layout/fragment_auth_role_selection">
 
     </fragment>
 </navigation>

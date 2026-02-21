@@ -13,7 +13,6 @@
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
-    <!-- Required for OAuth (opening browser) -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <queries>

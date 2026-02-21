@@ -1,7 +1,7 @@
 package com.example.bpmnow.network.services;
 
-import com.example.bpmnow.models.spotify.SpotifyPlaylistTracksResponse;
-import com.example.bpmnow.models.spotify.SpotifyPlaylistsResponse;
+import com.example.bpmnow.models.spotify.response.SpotifyPlaylistTracksResponse;
+import com.example.bpmnow.models.spotify.response.SpotifyPlaylistsResponse;
 import com.example.bpmnow.models.spotify.SpotifyUser;
 
 import retrofit2.Call;

@@ -1,4 +1,4 @@
-package com.example.bpmnow.models;
+package com.example.bpmnow.models.dj;
 
 import java.util.List;
 
@@ -9,6 +9,7 @@ public class Dj {
     private int age;
     private List<String> genres;
     private String profileImageUrl;
+    private String profileImageBase64;
     private String spotifyUserId;
     private boolean spotifyConnected;
     private int totalLikes;
@@ -58,6 +59,9 @@ public class Dj {
 
     public String getProfileImageUrl() { return profileImageUrl; }
     public void setProfileImageUrl(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
+
+    public String getProfileImageBase64() { return profileImageBase64; }
+    public void setProfileImageBase64(String profileImageBase64) { this.profileImageBase64 = profileImageBase64; }
 
     public String getSpotifyUserId() { return spotifyUserId; }
     public void setSpotifyUserId(String spotifyUserId) { this.spotifyUserId = spotifyUserId; }

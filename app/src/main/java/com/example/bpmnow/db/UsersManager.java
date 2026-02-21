@@ -28,7 +28,7 @@ public class UsersManager {
 //    After the form submmison of Dj/Clubber we put the 'uid' as the ID of the whole doc, so here we query by
 //    the doc id and get 'DocumentSnapshot', it would be much more simple for the db,
 //    insted of, if we do 'whereEqualTo("uid", uid)' then it would search by field all the docs and will return us 'querySnapshot'
-//    which is an array of ''DocumentSnapshot' documents.
+//    which is an array of 'DocumentSnapshot' documents.
     public Task<DocumentSnapshot> getUserDocument(String uid) {
         return db.collection(Constants.COLLECTION_USERS)
                 .document(uid)

@@ -1,5 +1,6 @@
 package com.example.bpmnow.adapters;
 
+import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,25 +10,28 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bpmnow.R;
-import com.example.bpmnow.models.Dj;
+import com.example.bpmnow.models.clubber.DjCardItem;
+import com.example.bpmnow.models.dj.Dj;
+import com.example.bpmnow.utils.ImageUtils;
+import com.google.android.material.imageview.ShapeableImageView;
 
 import java.util.List;
 
-public class DjAdapter extends RecyclerView.Adapter<DjAdapter.DjViewHolder> {
+public class ClubberDjAdapter extends RecyclerView.Adapter<ClubberDjAdapter.DjViewHolder> {
 
     public interface OnDjClickListener {
-        void onDjClick(Dj dj);
+        void onDjClick(DjCardItem dj);
     }
 
-    private List<Dj> DJs;
+    private List<DjCardItem> DJs;
     private OnDjClickListener listener;
 
-    public DjAdapter(List<Dj> DJs) {
+    public ClubberDjAdapter(List<DjCardItem> DJs) {
         this.DJs = DJs;
         this.listener = null;
     }
 
-    public DjAdapter(List<Dj> DJs, OnDjClickListener listener) {
+    public ClubberDjAdapter(List<DjCardItem> DJs, OnDjClickListener listener) {
         this.DJs = DJs;
         this.listener = listener;
     }
@@ -36,8 +40,8 @@ public class DjAdapter extends RecyclerView.Adapter<DjAdapter.DjViewHolder> {
     @Override
     public DjViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_dj_card, parent, false);
-        return new DjViewHolder(view);
+                .inflate(R.layout.item_clubber_dj_card, parent, false);
+        return new DjViewHolder(view,listener);
     }
 
     @Override
@@ -50,25 +54,40 @@ public class DjAdapter extends RecyclerView.Adapter<DjAdapter.DjViewHolder> {
         return DJs.size();
     }
 
-    public void updateData(List<Dj> newItems) {
+    public void updateData(List<DjCardItem> newItems) {
         this.DJs = newItems;
         notifyDataSetChanged();
     }
 
-    public class DjViewHolder extends RecyclerView.ViewHolder {
+    public static class DjViewHolder extends RecyclerView.ViewHolder {
         private TextView stageName, genre;
-
-        public DjViewHolder(@NonNull View itemView) {
+        private ShapeableImageView ivDjAvatar;
+        private OnDjClickListener listener;
+        public DjViewHolder(@NonNull View itemView, OnDjClickListener listener) {
             super(itemView);
             stageName = itemView.findViewById(R.id.djNameTextView);
             genre = itemView.findViewById(R.id.djGenreTextView);
+            ivDjAvatar = itemView.findViewById(R.id.ivDjAvatar);
+            this.listener = listener;
         }
 
-        public void bind(Dj dj) {
+        public void bind(DjCardItem dj) {
             stageName.setText(dj.getStageName());
             if (dj.getGenres() != null) {
                 genre.setText(String.join(", ", dj.getGenres()));
             }
+
+            // Load profile image from Base64
+            String base64 = dj.getProfileImageBase64();
+            if (base64 != null && !base64.isEmpty()) {
+                Bitmap bitmap = ImageUtils.base64ToBitmap(base64);
+                if (bitmap != null) {
+                    ivDjAvatar.setImageBitmap(bitmap);
+                }
+            } else {
+                ivDjAvatar.setImageResource(R.drawable.ic_default_avatar);
+            }
+
 //            itemView is the whole item itself, and we set an onClickListener on it(the legacy method) and we choosing that upon click we will call the "onDjClick"
             itemView.setOnClickListener(v -> {
                 if (listener != null) listener.onDjClick(dj);

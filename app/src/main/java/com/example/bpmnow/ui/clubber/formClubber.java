@@ -26,6 +26,7 @@ import com.example.bpmnow.R;
 import com.example.bpmnow.db.UsersManager;
 import com.example.bpmnow.network.FirebaseAuthConnection;
 import com.example.bpmnow.utils.Constants;
+import com.example.bpmnow.utils.ImageUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -93,7 +94,7 @@ public class formClubber extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_form_clubber, container, false);
+        return inflater.inflate(R.layout.fragment_clubber_form, container, false);
     }
 
     @Override
@@ -175,7 +176,11 @@ public class formClubber extends Fragment {
         userData.put("age", age);
         userData.put("genres", new ArrayList<>(selectedGenres));
         userData.put("role", Constants.ROLE_CLUBBER);
-        userData.put("profileImageUrl", selectedImageUri != null ? selectedImageUri.toString() : "");
+        String base64Image = "";
+        if (selectedImageUri != null) {
+            base64Image = ImageUtils.uriToBase64(requireContext(), selectedImageUri);
+        }
+        userData.put("profileImageBase64", base64Image);
         userData.put("createdAt", Timestamp.now());
 
         UsersManager.getInstance().saveUserProfile(uid, userData)

@@ -1,4 +1,4 @@
-package com.example.bpmnow.models;
+package com.example.bpmnow.models.clubber;
 
 import java.util.List;
 
@@ -8,6 +8,7 @@ public class Club {
     private String distance;
     private String currentDJ;
     private int imageResId;
+    private String imageUrl;
     private List<ClubDjEntry> djs;
 
     // No-arg constructor required for Firestore
@@ -28,6 +29,14 @@ public class Club {
         this.imageResId = imageResId;
     }
 
+    public Club(String name, List<String> genres, String distance, String currentDJ, String imageUrl) {
+        this.name = name;
+        this.genres = genres;
+        this.distance = distance;
+        this.currentDJ = currentDJ;
+        this.imageUrl = imageUrl;
+    }
+
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
@@ -42,6 +51,9 @@ public class Club {
 
     public int getImageResId() { return imageResId; }
     public void setImageResId(int imageResId) { this.imageResId = imageResId; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     public List<ClubDjEntry> getDjs() { return djs; }
     public void setDjs(List<ClubDjEntry> djs) { this.djs = djs; }

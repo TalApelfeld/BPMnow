@@ -3,7 +3,6 @@ package com.example.bpmnow.ui.clubber;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,10 +16,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bpmnow.R;
-import com.example.bpmnow.adapters.DjAdapter;
-import com.example.bpmnow.adapters.ClubAdapter;
-import com.example.bpmnow.models.Club;
-import com.example.bpmnow.models.Dj;
+import com.example.bpmnow.adapters.ClubberDjAdapter;
+import com.example.bpmnow.adapters.ClubberClubAdapter;
+import com.example.bpmnow.models.clubber.Club;
+import com.example.bpmnow.models.clubber.DjCardItem;
+import com.example.bpmnow.models.dj.Dj;
 import com.example.bpmnow.db.DjProfilesManager;
 import com.example.bpmnow.utils.Constants;
 import com.google.android.material.chip.Chip;
@@ -44,17 +44,17 @@ public class searchClubber extends Fragment {
     private String currentMode = "club";
 
     // Adapters for different modes
-    private ClubAdapter clubAdapter;
-    private DjAdapter djAdapter;
+    private ClubberClubAdapter clubberClubAdapter;
+    private ClubberDjAdapter clubberDjAdapter;
     private List<Club> clubResults = new ArrayList<>();
-    private List<Dj> djResults = new ArrayList<>();
+    private List<DjCardItem> djResults = new ArrayList<>();
 
     public searchClubber() {}
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_search_clubber, container, false);
+        return inflater.inflate(R.layout.fragment_clubber_search, container, false);
     }
 
     @Override
@@ -120,34 +120,34 @@ public class searchClubber extends Fragment {
         for (String[] clubData : Constants.CLUBS) {
             clubResults.add(new Club(clubData[0], Arrays.asList(clubData[1].split(",")), "", ""));
         }
-        clubAdapter = new ClubAdapter(clubResults, club -> {
+        clubberClubAdapter = new ClubberClubAdapter(clubResults, club -> {
             Bundle bundle = new Bundle();
             bundle.putString("clubName", club.getName());
             Navigation.findNavController(requireView()).navigate(R.id.action_search_to_clubDetail, bundle);
         });
-        rvSearchResults.setAdapter(clubAdapter);
+        rvSearchResults.setAdapter(clubberClubAdapter);
         tvNoResults.setVisibility(View.GONE);
     }
 
     private void setupDjAdapter() {
-        djAdapter = new DjAdapter(djResults, dj -> {
+        clubberDjAdapter = new ClubberDjAdapter(djResults, dj -> {
             Bundle bundle = new Bundle();
-            bundle.putString("djId", dj.getDjId());
+            bundle.putString("djId", dj.getUid());
             Navigation.findNavController(requireView()).navigate(R.id.action_search_to_djProfile, bundle);
         });
-        rvSearchResults.setAdapter(djAdapter);
+        rvSearchResults.setAdapter(clubberDjAdapter);
     }
 
     private void searchDjs(String query) {
         if (query.isEmpty()) {
             djResults.clear();
-            djAdapter.updateData(djResults);
+            clubberDjAdapter.updateData(djResults);
             tvNoResults.setVisibility(View.GONE);
             return;
         }
         djResults.clear();
         djResults.addAll(DjProfilesManager.getInstance().searchByName(query));
-        djAdapter.updateData(djResults);
+        clubberDjAdapter.updateData(djResults);
         tvNoResults.setVisibility(djResults.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
@@ -169,7 +169,7 @@ public class searchClubber extends Fragment {
     private void searchByGenre(String genre) {
         djResults.clear();
         djResults.addAll(DjProfilesManager.getInstance().searchByGenre(genre));
-        djAdapter.updateData(djResults);
+        clubberDjAdapter.updateData(djResults);
         tvNoResults.setVisibility(djResults.isEmpty() ? View.VISIBLE : View.GONE);
     }
 }

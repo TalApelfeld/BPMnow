@@ -34,6 +34,7 @@ public class TracksManager {
         return db.collection(Constants.COLLECTION_TRACKS)
                 .whereEqualTo("uid", djId)
                 .whereEqualTo("idPlaylist", playlistId)
+                .limit(20)
                 .get();
     }
 

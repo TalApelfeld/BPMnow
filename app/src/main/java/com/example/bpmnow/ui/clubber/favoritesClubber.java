@@ -15,10 +15,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bpmnow.R;
-import com.example.bpmnow.adapters.DjAdapter;
+import com.example.bpmnow.adapters.ClubberDjAdapter;
 import com.example.bpmnow.db.DjLikesManager;
 import com.example.bpmnow.db.DjProfilesManager;
-import com.example.bpmnow.models.Dj;
+import com.example.bpmnow.models.clubber.DjCardItem;
+import com.example.bpmnow.models.dj.Dj;
 import com.example.bpmnow.network.FirebaseAuthConnection;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -30,18 +31,19 @@ public class favoritesClubber extends Fragment {
     private static final String TAG = "favoritesClubber";
     private RecyclerView rvFavorites;
     private TextView tvNoFavorites;
-    private DjAdapter djAdapter;
-    private List<Dj> favoriteDjs = new ArrayList<>();
+    private ClubberDjAdapter clubberDjAdapter;
+    private List<DjCardItem> favoriteDjs = new ArrayList<>();
     private final DjLikesManager djLikesManager = DjLikesManager.getInstance();
     private final DjProfilesManager djProfilesManager = DjProfilesManager.getInstance();
     private String currentUid;
 
-    public favoritesClubber() {}
+    public favoritesClubber() {
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_favorites_clubber, container, false);
+        return inflater.inflate(R.layout.fragment_clubber_favorites, container, false);
     }
 
     @Override
@@ -54,12 +56,12 @@ public class favoritesClubber extends Fragment {
         tvNoFavorites = view.findViewById(R.id.tvNoFavorites);
 
         rvFavorites.setLayoutManager(new LinearLayoutManager(getContext()));
-        djAdapter = new DjAdapter(favoriteDjs, dj -> {
+        clubberDjAdapter = new ClubberDjAdapter(favoriteDjs, dj -> {
             Bundle bundle = new Bundle();
-            bundle.putString("djId", dj.getDjId());
+            bundle.putString("djId", dj.getUid());
             Navigation.findNavController(view).navigate(R.id.action_favorites_to_djProfile, bundle);
         });
-        rvFavorites.setAdapter(djAdapter);
+        rvFavorites.setAdapter(clubberDjAdapter);
 
         loadFavorites();
     }
@@ -71,33 +73,35 @@ public class favoritesClubber extends Fragment {
     }
 
     private void loadFavorites() {
+//       1) Getting docs with matching clubber id, then extracting the dj id's.
         djLikesManager.getLikesByClubber(currentUid)
                 .addOnSuccessListener(querySnapshot -> {
                     favoriteDjs.clear();
                     List<String> djIds = new ArrayList<>();
+//                    Extracting dj id's from docs.
                     for (QueryDocumentSnapshot doc : querySnapshot) {
                         String djId = doc.getString("djId");
                         if (djId != null) djIds.add(djId);
                     }
-
+//                    Updating ui if no favorites.
                     if (djIds.isEmpty()) {
                         tvNoFavorites.setVisibility(View.VISIBLE);
                         rvFavorites.setVisibility(View.GONE);
-                        djAdapter.updateData(favoriteDjs);
+                        clubberDjAdapter.updateData(favoriteDjs);
                         return;
                     }
 
-                    // Load DJ profiles for each liked DJ
+                    // 2) Load DJ profiles based on dj id's
                     for (String djId : djIds) {
-                        djProfilesManager.getDjProfileAsModel(djId)
-                                .addOnSuccessListener(dj -> {
-                                    if (dj != null) {
-                                        favoriteDjs.add(dj);
-                                        djAdapter.updateData(favoriteDjs);
+                        djProfilesManager.getDjProfile(djId).addOnSuccessListener(doc -> {
+                                    if (doc != null) {
+                                        favoriteDjs.add(doc.toObject(DjCardItem.class));
+                                        clubberDjAdapter.updateData(favoriteDjs);
                                     }
                                     tvNoFavorites.setVisibility(favoriteDjs.isEmpty() ? View.VISIBLE : View.GONE);
                                     rvFavorites.setVisibility(favoriteDjs.isEmpty() ? View.GONE : View.VISIBLE);
-                                });
+                                })
+                                .addOnFailureListener(e -> Log.e(TAG, "Error loading favorites", e));
                     }
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Error loading favorites", e));

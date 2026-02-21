@@ -4,34 +4,27 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.bpmnow.models.spotify.SpotifyArtist;
 import com.example.bpmnow.models.spotify.SpotifyPlaylist;
-import com.example.bpmnow.models.spotify.SpotifyPlaylistTracksResponse;
-import com.example.bpmnow.models.spotify.SpotifyPlaylistsResponse;
+import com.example.bpmnow.models.spotify.response.SpotifyPlaylistTracksResponse;
+import com.example.bpmnow.models.spotify.response.SpotifyPlaylistsResponse;
 import com.example.bpmnow.models.spotify.SpotifyTrackItem;
 import com.example.bpmnow.db.DjProfilesManager;
 import com.example.bpmnow.db.PlaylistsManager;
 import com.example.bpmnow.db.TracksManager;
+import com.example.bpmnow.models.token.ResponseRefreshToken;
 import com.example.bpmnow.network.FirebaseAuthConnection;
 import com.example.bpmnow.network.retorfit.SpotifyRetrofitClient;
-import com.example.bpmnow.utils.Constants;
+import com.example.bpmnow.network.retorfit.SpotifyRetrofitClientToken;
 import com.example.bpmnow.utils.SpotifyTokenManager;
 
-import org.json.JSONObject;
-
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import retrofit2.Call;
@@ -73,125 +66,88 @@ public class SpotifyCallbackActivity extends AppCompatActivity {
         }
     }
 
-    // POST to https://accounts.spotify.com/api/token
-    // As per Spotify docs: grant_type, code, redirect_uri, client_id, code_verifier
-    // Content-Type must be application/x-www-form-urlencoded
+    // POST to https://accounts.spotify.com/api/token with PKCE parameters
     private void exchangeCodeForToken(String code, String codeVerifier) {
-        new Thread(() -> {
-            try {
-                URL url = new URL("https://accounts.spotify.com/api/token");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                conn.setDoOutput(true);
+        SpotifyRetrofitClientToken.getInstance().getApiService()
+                .exchangeCode(
+                        "authorization_code",
+                        code,
+                        SpotifyAuth.REDIRECT_URI,
+                        SpotifyAuth.CLIENT_ID,
+                        codeVerifier
+                )
+                .enqueue(new Callback<ResponseRefreshToken>() {
+                    @Override
+                    public void onResponse(Call<ResponseRefreshToken> call,
+                                           Response<ResponseRefreshToken> tokenResponse) {
+                        if (tokenResponse.isSuccessful() && tokenResponse.body() != null) {
+                            ResponseRefreshToken body = tokenResponse.body();
+                            String accessToken = body.getAccess_token();
+                            String refreshToken = body.getRefresh_token();
+                            int expiresIn = body.getExpires_in();
 
-                // Build request body exactly as Spotify docs specify
-                String body = "grant_type=authorization_code"
-                        + "&code=" + URLEncoder.encode(code, "UTF-8")
-                        + "&redirect_uri=" + URLEncoder.encode(SpotifyAuth.REDIRECT_URI, "UTF-8")
-                        + "&client_id=" + URLEncoder.encode(SpotifyAuth.CLIENT_ID, "UTF-8")
-                        + "&code_verifier=" + URLEncoder.encode(codeVerifier, "UTF-8");
+                            // Save tokens securely in SharedPreferences
+                            SpotifyTokenManager.getInstance().saveTokens(
+                                    SpotifyCallbackActivity.this, accessToken, refreshToken, expiresIn);
+                            Log.d(TAG, "Access token received successfully");
 
-                OutputStream os = conn.getOutputStream();
-                os.write(body.getBytes("UTF-8"));
-                os.close();
+                            // Fetch playlists with the new token
+                            fetchAndSavePlaylists(accessToken);
+                        } else {
+                            Log.e(TAG, "Token exchange failed: " + tokenResponse.code());
+                        }
+                    }
 
-                int responseCode = conn.getResponseCode();
-                Scanner scanner = new Scanner(conn.getInputStream());
-                StringBuilder response = new StringBuilder();
-                while (scanner.hasNextLine()) {
-                    response.append(scanner.nextLine());
-                }
-                scanner.close();
-
-                if (responseCode == 200) {
-                    JSONObject json = new JSONObject(response.toString());
-                    String accessToken = json.getString("access_token");
-                    String refreshToken = json.getString("refresh_token");
-                    int expiresIn = json.getInt("expires_in"); // 3600 seconds = 1 hour
-
-                    // Save tokens securely in SharedPreferences
-                    SpotifyTokenManager.getInstance().saveTokens(this, accessToken, refreshToken, expiresIn);
-                    Log.d(TAG, "Access token received successfully");
-                    SpotifyRetrofitClient.getInstance().getApiService()
-                            .getMyPlaylists("Bearer " + accessToken)
-                            .enqueue(new Callback<SpotifyPlaylistsResponse>() {
-                                @Override
-                                public void onResponse(Call<SpotifyPlaylistsResponse> call,
-                                                       Response<SpotifyPlaylistsResponse> response) {
-                                    if (response.isSuccessful() && response.body() != null) {
-                                        if (response.body().getItems() != null) {
-                                            List<SpotifyPlaylist> playlists = response.body().getItems();
-                                            Log.d(TAG, response.body().getItems().toString());
-
-//                                            Saving the playlists to the database, and get the playlists id's for track fetching
-                                            List<String> playlistIds = savePlaylistsToDB(playlists);
-                                            savePlaylistsIdsToDB(playlistIds);
-                                            totalPlaylists = playlistIds.size();
-                                            Log.d("totalPlaylists", "Total playlists: " + totalPlaylists);
-
-//                                            Fetching tracks for each playlist
-                                            for (String playlistId : playlistIds) {
-                                                SpotifyRetrofitClient.getInstance().getApiService()
-                                                        .getPlaylistTracks(playlistId, "Bearer " + accessToken)
-                                                        .enqueue(new Callback<SpotifyPlaylistTracksResponse>() {
-                                                            @Override
-                                                            public void onResponse(Call<SpotifyPlaylistTracksResponse> call,
-                                                                                   Response<SpotifyPlaylistTracksResponse> response) {
-                                                                if (response.isSuccessful() && response.body() != null) {
-                                                                    if (response.body().getItems() != null) {
-                                                                        List<SpotifyTrackItem> tracks = response.body().getItems();
-                                                                        saveTracksToDB(tracks, playlistId);
-                                                                    }
-                                                                }
-                                                                // Always increment, whether tracks were saved or not
-                                                                if (count.incrementAndGet() >= totalPlaylists) {
-                                                                    // Navigate back to MainActivity
-                                                                    runOnUiThread(() -> {
-                                                                        Intent intent = new Intent(SpotifyCallbackActivity.this, MainActivity.class);
-                                                                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                                                        startActivity(intent);
-                                                                        finish();
-                                                                    });
-                                                                }
-                                                            }
-
-                                                            @Override
-                                                            public void onFailure(Call<SpotifyPlaylistTracksResponse> call, Throwable t) {
-                                                                Log.e(TAG, "Error loading tracks", t);
-                                                                if (count.incrementAndGet() >= totalPlaylists) {
-                                                                    // Navigate back to MainActivity
-                                                                    runOnUiThread(() -> {
-                                                                        Intent intent = new Intent(SpotifyCallbackActivity.this, MainActivity.class);
-                                                                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                                                        startActivity(intent);
-                                                                        finish();
-                                                                    });
-                                                                }
-                                                            }
-                                                        });
-                                            }
-                                        }
-                                    }
-                                }
-
-                                @Override
-                                public void onFailure(Call<SpotifyPlaylistsResponse> call, Throwable t) {
-                                    Log.e(TAG, "Error loading playlists", t);
-                                }
-                            });
-
-
-                } else {
-                    Log.e(TAG, "Token exchange failed: " + responseCode + " - " + response);
-                }
-
-            } catch (Exception e) {
-                Log.e(TAG, "Error exchanging code for token", e);
-            }
-        }).start();
+                    @Override
+                    public void onFailure(Call<ResponseRefreshToken> call, Throwable t) {
+                        Log.e(TAG, "Error exchanging code for token", t);
+                    }
+                });
     }
 
+//    Playlists are fetched and saved to the database
+    private void fetchAndSavePlaylists(String accessToken) {
+        fetchPlaylists(accessToken);
+//        based on playlists id's we get, we then can fetch the tracks.
+    }
+    private void fetchPlaylists(String accessToken) {
+        SpotifyRetrofitClient.getInstance().getApiService()
+                .getMyPlaylists("Bearer " + accessToken)
+                .enqueue(new Callback<SpotifyPlaylistsResponse>() {
+                    @Override
+                    public void onResponse(Call<SpotifyPlaylistsResponse> call,
+                                           Response<SpotifyPlaylistsResponse> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            if (response.body().getItems() != null) {
+                                List<SpotifyPlaylist> playlists = response.body().getItems();
+                                Log.d(TAG, response.body().getItems().toString());
+
+//                              Saving the playlists to the database, and get the playlists id's for track fetching
+                                List<String> playlistIds = savePlaylistsToDB(playlists);
+                                savePlaylistsIdsToDB(playlistIds);
+                                totalPlaylists = playlistIds.size();
+                                Log.d("totalPlaylists", "Total playlists: " + totalPlaylists);
+
+//                              Fetching tracks for each playlist
+                                for (String playlistId : playlistIds) {
+                                    fetchTracks(playlistId, accessToken);
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<SpotifyPlaylistsResponse> call, Throwable t) {
+                        Log.e(TAG, "Error loading playlists", t);
+                    }
+                });
+    }
+    private void savePlaylistsIdsToDB(List<String> playlistIds) {
+        DjProfilesManager.getInstance().savePlaylistIds(
+                        FirebaseAuthConnection.getInstance().getUserId(), playlistIds)
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Playlists IDs saved to Firestore"))
+                .addOnFailureListener(e -> Log.e(TAG, "Error saving playlists IDs to Firestore", e));
+    }
     private List<String> savePlaylistsToDB(List<SpotifyPlaylist> playlists) {
         List<String> playlistIds = new ArrayList<>();
         String currentUserId = FirebaseAuthConnection.getInstance().getUserId();
@@ -224,6 +180,44 @@ public class SpotifyCallbackActivity extends AppCompatActivity {
         return playlistIds;
     }
 
+//    Tracks are fetched and saved to the database
+    private void fetchTracks(String playlistId, String accessToken) {
+        SpotifyRetrofitClient.getInstance().getApiService()
+                .getPlaylistTracks(playlistId, "Bearer " + accessToken)
+                .enqueue(new Callback<SpotifyPlaylistTracksResponse>() {
+                    @Override
+                    public void onResponse(Call<SpotifyPlaylistTracksResponse> call,
+                                           Response<SpotifyPlaylistTracksResponse> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            if (response.body().getItems() != null) {
+                                List<SpotifyTrackItem> tracks = response.body().getItems();
+//                                Save tracks to the database
+                                saveTracksToDB(tracks, playlistId);
+                            }
+                        }
+                        // Always increment, whether tracks were saved or not
+                        if (count.incrementAndGet() >= totalPlaylists) {
+                            // Navigate back to MainActivity
+                            Intent intent = new Intent(SpotifyCallbackActivity.this, MainActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            startActivity(intent);
+                            finish();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<SpotifyPlaylistTracksResponse> call, Throwable t) {
+                        Log.e(TAG, "Error loading tracks", t);
+                        if (count.incrementAndGet() >= totalPlaylists) {
+                            // Navigate back to MainActivity
+                            Intent intent = new Intent(SpotifyCallbackActivity.this, MainActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            startActivity(intent);
+                            finish();
+                        }
+                    }
+                });
+    }
     private void saveTracksToDB(List<SpotifyTrackItem> tracks, String playlistId) {
         String currentUserId = FirebaseAuthConnection.getInstance().getUserId();
         List<Map<String, Object>> trackMaps = new ArrayList<>();
@@ -256,12 +250,5 @@ public class SpotifyCallbackActivity extends AppCompatActivity {
         TracksManager.getInstance().batchSaveTracks(trackMaps)
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "All tracks saved"))
                 .addOnFailureListener(e -> Log.e(TAG, "Error saving tracks", e));
-    }
-
-    private void savePlaylistsIdsToDB(List<String> playlistIds) {
-        DjProfilesManager.getInstance().savePlaylistIds(
-                FirebaseAuthConnection.getInstance().getUserId(), playlistIds)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Playlists IDs saved to Firestore"))
-                .addOnFailureListener(e -> Log.e(TAG, "Error saving playlists IDs to Firestore", e));
     }
 }
